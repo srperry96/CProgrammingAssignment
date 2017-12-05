@@ -1,18 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <golfGameGraphicsFuncs.h>
-
-typedef struct
-{
-    int score;
-    char name[10];
-} NameAndScore;
+#include <golfGameHighscoreFuncs.h>
 
 void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouseY, float launchAngle)
 {
-    char btnPressed;
-    int enterPressed = 0;
-
     while(1)
     {
         wait_for_event();
@@ -206,57 +198,6 @@ int getMenuSelection(int resX, int resY, int menuID)
     }
 }
 
-void showHighScores()
-{
-    NameAndScore namesAndScoresArray[10];
-
-    int i, j;
-
-    //read in high scores to array
-    FILE *hiscoresFile = fopen("highscores.txt", "r");
-    char nextLetter;
-
-    for(i = 0; i < 10; i++)
-    {
-        fscanf(hiscoresFile, "%d", &namesAndScoresArray[i].score);
-        j = 0;
-        while(1)
-        {   //read characters until a newline char is reached
-            fscanf(hiscoresFile, "%c", &nextLetter);
-            if(nextLetter == '\n')
-            { //set terminating character of string at current element
-                namesAndScoresArray[i].name[j] = '\0';
-                break;
-            }
-            else
-            {   //add new char to name string
-                namesAndScoresArray[i].name[j] = nextLetter;
-                j++;
-            }
-        }
-        //============change this to graphical printout
-        printf("\n%d: %s : %d", (i+1), namesAndScoresArray[i].name, namesAndScoresArray[i].score);
-    }
-    fclose(hiscoresFile);
-
-    /* WRITE TO FILE CODE
-    --IF A NEW HIGH SCORE IS SET it will be in namesAndScoresArray[10]
-    --need to calculate position in list, then write elements 0 - position,
-    --then write new score
-    --then write elements position + 1 to 9
-
-    FILE *hiscoresFile = fopen("highscores.txt", "w");
-    int i, j;
-    for(i = 0; i < 10; i++)
-    {
-        fprintf(hiscoresFile, "%d", namesAndScoresArray[i].score);
-        fprintf(hiscoresFile, namesAndScoresArray[i].name);
-        fprintf(hiscoresFile, "\n");
-    }
-    fclose(hiscoresFile);
-    */
-}
-
 int main(void)
 {
     int resX = 640, resY = 480; //Window resolution variables
@@ -281,11 +222,12 @@ int main(void)
 
     //get menu button selection
     int menuSelection = getMenuSelection(resX, resY,1); //1 is main menu
-    printf("\n\nselection is %d", menuSelection);
+    printf("\n\nmenu selection is %d", menuSelection);
 
 //=========================================
-//    if(menuSelection == 1) showHighScores();
-//    return 0;
+    if(menuSelection == 1)
+        showHighScores();
+    return 0;
 //=====================make menu selection do stuff now==================
 
     //draw initial screen
@@ -307,6 +249,8 @@ int main(void)
         printf("\nCurrent Score: %d\n", score);
     }
 
+    checkAndSetNewHighScore(score);
+    showHighScores();
 
     //wait for a click before closing
     while(1)
