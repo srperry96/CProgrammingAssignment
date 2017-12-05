@@ -156,6 +156,7 @@ int getMenuSelection(int resX, int resY, int menuID)
     }
 
     //set up and draw all buttons
+    cleardevice();
     for(i = 0; i < numMenuItems; i++)
     {
         buttonsArray[i].height = buttonHeight;
@@ -198,38 +199,20 @@ int getMenuSelection(int resX, int resY, int menuID)
     }
 }
 
-int main(void)
+void settingsMenu(int resX, int resY)
 {
-    int resX = 640, resY = 480; //Window resolution variables
+    int menuSelection = getMenuSelection(resX, resY, 2);
+}
+
+void playGame(int resX, int resY)
+{
     int stickmanXPos = 50; //initial stickman position
     int mouseX = 0, mouseY = 0;
     float velX = 60;
     float velY = 60; //launch velocity components default to 45 degree angle
     float launchAngle = 0.0;
 
-    initwindow(resX, resY); //open graphics window
-    initfont();//initialise text
-    //getColors(); //get background and pen colors
-
-    initmouse();
-    initkeyboard();
-    create_event_queue();
-    reg_display_events();
-    reg_mouse_events();
-    reg_keyboard_events();
-    //hide_mouse_cursor(); -- maybe create own cursor later on
-
-
-    //get menu button selection
-    int menuSelection = getMenuSelection(resX, resY,1); //1 is main menu
-    printf("\n\nmenu selection is %d", menuSelection);
-
-//=========================================
-    if(menuSelection == 1)
-        showHighScores();
-    return 0;
-//=====================make menu selection do stuff now==================
-
+    cleardevice();
     //draw initial screen
     drawStickman(stickmanXPos, resY);
     drawBow(stickmanXPos, resY, 60, launchAngle);
@@ -249,10 +232,14 @@ int main(void)
         printf("\nCurrent Score: %d\n", score);
     }
 
-    checkAndSetNewHighScore(score);
-    showHighScores();
-
-    //wait for a click before closing
+    char scoreString[5];
+    sprintf(scoreString, "%d", score);
+    outtextxy(resX / 2 - 80, resY / 2 - 100,"GAME OVER");
+    outtextxy(resX / 2 - 80, resY / 2 - 60,"Score: ");
+    outtextxy(resX / 2, resY / 2 - 60, scoreString);
+    outtextxy(resX / 2 - 120, resY / 2 - 20, "Click to continue");
+    update_display();
+    //wait for a click
     while(1)
     {
         wait_for_event();
@@ -261,6 +248,47 @@ int main(void)
             break;
     }
 
+    checkAndSetNewHighScore(score, resX, resY);
+    showHighScores(resX, resY);
+}
+
+
+int main(void)
+{
+    int resX = 800, resY = 600, exitFlag = 0; //Window resolution variables
+
+    initwindow(resX, resY); //open graphics window
+    initfont();//initialise text
+    //getColors(); //get background and pen colors
+
+    initmouse();
+    initkeyboard();
+    create_event_queue();
+    reg_display_events();
+    reg_mouse_events();
+    reg_keyboard_events();
+
+    while(exitFlag == 0) //loop until exit game is pressed
+    {
+        cleardevice();
+        //get menu button selection
+        int menuSelection = getMenuSelection(resX, resY, 1); //1 is main menu
+        printf("\n\nMenu selection is: %d\n", menuSelection);
+
+        switch(menuSelection)
+        {
+            case 0: playGame(resX, resY);
+                    break;
+            case 1: showHighScores(resX, resY);
+                    break;
+            case 2: settingsMenu(resX, resY);
+                    break;
+            case 3: exitFlag = 1;
+                    break;
+            default:
+                break;
+        }
+    }
     //close everything
     closemouse();
     closekeyboard();

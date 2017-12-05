@@ -13,7 +13,8 @@ void drawStickman(int x_position, int y_position)
 /*Draw ground line 50 pixels above the bottom of the screen*/
 void drawGround(int resX, int resY)
 {
-    line(0, resY-50, resX, resY-50, 2);
+    //line(0, resY-50, resX, resY-50, 2);
+    filled_rectangle(0, resY-50, resX, resY, GREEN);
 }
 
 void drawTarget(int resX, int resY)
@@ -145,59 +146,69 @@ void getColors(void)
 
 int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
 {
-    int initialX = (stickmanXPos + 15);//x pos of stickman + 15 for length of arm
-    int initialY = (resY - 95);//-120 to get stickman position + 25 to get arm position = -95
+    int initialX = stickmanXPos + 15;//x pos of stickman + extra to put ball in front of stickman
+    int initialY = resY - 50 - 10;//resY - 50 is ground level, - 10 so ball sits on top of ground
     int posX = initialX;
     int posY = initialY;
+    int prevX = initialX, prevY = initialY;
     float gravity = 9.81, time = 0;
     int maxHeight = 0;
     int obstacleHit = 0, direction = 1;
 
     moveto(initialX, initialY);
-
-while(posX <= resX && maxHeight != -1)
-{
-    maxHeight = posY;
-    do
+//=========================
+    while(posX <= resX && posX >= 0 && maxHeight != -1)
     {
-        time = (posX - initialX) / velX;
-        posY = (int)(initialY - (velY * time) + (gravity*time*time)/2);
-        lineto(posX, posY, 1);
-        if(direction == 1) posX++;
-        else posX--;
-
-        pausefor(1); //wait 1ms
-        update_display();//having update display here makes arc look like something being thrown
-
-        if(posY < maxHeight) maxHeight = posY; //log max height (min y value) of current bounce
-
-        if(posX > resX - 20)
+        maxHeight = posY;
+        do
         {
-            obstacleHit = 1;
-            break;
+            prevX = posX;
+            prevY = posY;
+
+            time = (posX - initialX) / velX;
+            posY = (int)(initialY - (velY * time) + (gravity * time * time) / 2);
+            //draw new ball white, draw over old ball in black
+            filled_circle(prevX, prevY, 5, BLACK);
+            filled_circle(posX, posY, 4, WHITE);
+
+            drawGround(resX, resY);//redraw ground in case black circle was drawn over it by accident
+            drawTarget(resX, resY);
+
+            if(direction == 1) posX++;
+            else posX--;
+
+            pausefor(1); //wait 1ms
+            update_display();//having update display here makes arc look like something being thrown
+
+            if(posY < maxHeight) maxHeight = posY; //log max height (min y value) of current bounce
+
+            if(posX > resX - 20)
+            {
+                obstacleHit = 1;
+                break;
+            }
+
+        } while(posY <= resY - 54); //resY-51 not -50 so arc doesnt go through the ground
+
+        //if bouncing off obstacle not ground
+        if(obstacleHit == 1)
+        {
+            initialX = posX;
+            initialY = posY;
+            velX = -0.6 * velX;
+            velY = 0.6 * velY;
+            obstacleHit = 0;
+            direction = abs(direction - 1); //change direction from 0 to 1 or vice versa
         }
-    } while(posY <= resY-51); //resY-51 not -50 so arc doesnt go through the ground
-
-    //if bouncing off obstacle not ground
-    if(obstacleHit == 1)
-    {
-        initialX = posX;
-        initialY = posY;
-        velX = -0.6 * velX;
-        velY = 0.6 * velY;
-        obstacleHit = 0;
-        direction = abs(direction - 1); //change direction from 0 to 1 or vice versa
+        else //if bouncing off ground
+        {
+            initialY = resY - 55;
+            velY *= 0.6;
+            initialX = posX;
+        }
+        if(maxHeight > resY - 50 - 15) maxHeight = -1; //if max height reached by the ball is less than 10 pixels above the ground, count that as stopping
     }
-    else //if bouncing off ground
-    {
-        initialY = resY - 52;
-        velY *= 0.6;
-        initialX = posX;
-    }
-    if(maxHeight > resY - 50 - 10) maxHeight = -1; //if max height reached by the ball is less than 10 pixels above the ground, count that as stopping
-}
-
-    posX--; //undo posX++ from final loop through as it happens after drawing the arc
+//===========================
     return posX;
 }
 
@@ -208,7 +219,7 @@ void drawPowerArrow(int mouseOldX, int mouseNewX, int mouseOldY, int mouseNewY, 
     float angleInDegs;
 
     //labels for angle and power
-    angleInDegs = angle*(180/M_PI); //convert to degrees for output
+    angleInDegs = angle * (180/M_PI); //convert to degrees for output
     printf("angle is %f\n", angleInDegs);
     sprintf(angleLabel, "%0.0f", angleInDegs);
     sprintf(powerLabel, "%0.0f", power);

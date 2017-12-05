@@ -12,7 +12,7 @@ typedef struct
 
 void resetHighScores(void);
 void readInHighScores(NameAndScore highScoresArray[10]);
-void showHighScores(void);
-void checkAndSetNewHighScore(int score);
+void showHighScores(int resX, int resY);
+void checkAndSetNewHighScore(int score, int resX, int resY);
 
 #endif //__GOLFGAMEHIGHSCOREFUNCS_H__
