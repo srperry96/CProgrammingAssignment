@@ -150,25 +150,51 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
     int posX = initialX;
     int posY = initialY;
     float gravity = 9.81, time = 0;
+    int maxHeight = 0;
+    int obstacleHit = 0, direction = 1;
 
     moveto(initialX, initialY);
 
-while(posX <= resX)
+while(posX <= resX && maxHeight != -1)
 {
+    maxHeight = posY;
     do
     {
         time = (posX - initialX) / velX;
         posY = (int)(initialY - (velY * time) + (gravity*time*time)/2);
         lineto(posX, posY, 1);
-        posX++;
+        if(direction == 1) posX++;
+        else posX--;
+
         pausefor(1); //wait 1ms
         update_display();//having update display here makes arc look like something being thrown
 
+        if(posY < maxHeight) maxHeight = posY; //log max height (min y value) of current bounce
 
+        if(posX > resX - 20)
+        {
+            obstacleHit = 1;
+            break;
+        }
     } while(posY <= resY-51); //resY-51 not -50 so arc doesnt go through the ground
-    initialY = resY - 52;
-    velY *= 0.8;
-    initialX = posX;
+
+    //if bouncing off obstacle not ground
+    if(obstacleHit == 1)
+    {
+        initialX = posX;
+        initialY = posY;
+        velX = -0.6 * velX;
+        velY = 0.6 * velY;
+        obstacleHit = 0;
+        direction = abs(direction - 1); //change direction from 0 to 1 or vice versa
+    }
+    else //if bouncing off ground
+    {
+        initialY = resY - 52;
+        velY *= 0.6;
+        initialX = posX;
+    }
+    if(maxHeight > resY - 50 - 10) maxHeight = -1; //if max height reached by the ball is less than 10 pixels above the ground, count that as stopping
 }
 
     posX--; //undo posX++ from final loop through as it happens after drawing the arc
