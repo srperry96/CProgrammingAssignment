@@ -15,7 +15,7 @@ void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouse
             {
                 *stickmanXPos -= 5;
                 redrawEverything(*stickmanXPos, resX, resY);
-                drawBow(*stickmanXPos, resY, 60.0, launchAngle);
+                drawArmsAndClub(*stickmanXPos, resY, 60.0, launchAngle);
             }
         }
         else if(event_key_right_arrow())
@@ -24,7 +24,7 @@ void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouse
             {
                 *stickmanXPos += 5;
                 redrawEverything(*stickmanXPos, resX, resY);
-                drawBow(*stickmanXPos, resY, 60.0, launchAngle);
+                drawArmsAndClub(*stickmanXPos, resY, 60.0, launchAngle);
             }
         }
         else if(event_mouse_position_changed())
@@ -77,7 +77,7 @@ void getLaunchAngle(float *velX, float *velY, int mouseOldX, int mouseOldY, int 
             //redraw window with launch angle line
             redrawEverything(*stickmanXPos, resX, resY);
             drawPowerArrow(mouseOldX, mouseNewX, mouseOldY, mouseNewY, power, *angle);
-            drawBow(*stickmanXPos, resY, power, *angle);
+            drawArmsAndClub(*stickmanXPos, resY, power, *angle);
 
             update_display();
         }
@@ -85,7 +85,7 @@ void getLaunchAngle(float *velX, float *velY, int mouseOldX, int mouseOldY, int 
         {
             cleardevice();
             redrawEverything(*stickmanXPos, resX, resY);
-            drawBow(*stickmanXPos, resY, power, *angle);
+            drawArmsAndClub(*stickmanXPos, resY, power, *angle);
             break;
         }
     }
@@ -215,7 +215,7 @@ void playGame(int resX, int resY)
     cleardevice();
     //draw initial screen
     drawStickman(stickmanXPos, resY);
-    drawBow(stickmanXPos, resY, 60, launchAngle);
+    drawArmsAndClub(stickmanXPos, resY, 60, launchAngle);
     drawGround(resX, resY);
     drawTarget(resX,resY);
     update_display();
@@ -259,6 +259,7 @@ int main(void)
 
     initwindow(resX, resY); //open graphics window
     initfont();//initialise text
+    setcolor(WHITE);
     //getColors(); //get background and pen colors
 
     initmouse();

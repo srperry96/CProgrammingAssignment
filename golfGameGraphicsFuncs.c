@@ -3,11 +3,10 @@
 void drawStickman(int x_position, int y_position)
 {
     y_position -= 120;//Y position calc: -70 for height of stickman, -50 for ground height = -120
-    circle(x_position, y_position, 10, 2);
+    filled_circle(x_position, y_position, 10, WHITE);
     line(x_position, y_position+10, x_position, y_position+40, 2); //body
     line(x_position, y_position+40, x_position - 10, y_position+70, 2);//leftleg
     line(x_position, y_position+40, x_position + 10, y_position+70, 2);//rightleg
-    line(x_position - 15, y_position+25, x_position, y_position+25, 2);//left arm - right is drawn with bow elsewhere
 }
 
 /*Draw ground line 50 pixels above the bottom of the screen*/
@@ -25,32 +24,51 @@ void drawTarget(int resX, int resY)
     //draw lines and labels for target
     for(i = 0; i < 5; i++)
     {
-        pos = (i*30) + resX - 200;
-        moveto(pos, resY-50);
-        lineto(pos, resY-40, 1);
+        pos = (i * 30) + resX - 200;
+        moveto(pos, resY - 50);
+        lineto(pos, resY - 40, 1);
         sprintf(strScores, "%d", scores[i]);
-        outtextxy(pos+6, resY-45, strScores);
+        outtextxy(pos + 6, resY - 45, strScores);
     }
 
     //draw last line of target (right most line)
-    pos = (5*30) + resX - 200;
-    moveto(pos, resY-50);
-    lineto(pos, resY-40, 1);
+    pos = (5 * 30) + resX - 200;
+    moveto(pos, resY - 50);
+    lineto(pos, resY - 40, 1);
 }
 
-void drawBow(int startX, int resY, double power, float angle)
+void drawArmsAndClub(int startX, int resY, double power, float angle)
 {
+    angle -= M_PI_4;
     //lengths of arm in x and y for specific angle
     int lengthX = (int)(20 * cos(angle));
     int lengthY = (int)(20 * sin(angle));
 
-    int startY = resY - 120 + 25; //same calculation as in drawStickman function
+    int startY = resY - 120 + 15; //same calculation as in drawStickman function
 
     printf("\nX:%d, %d; Y:%d, %d; P:%0.2f\n", startX, lengthX, startY, lengthY, power); //debugging
 
-    int angleInDegs = (int)(angle*(180/M_PI)); //convert to degrees
-    line(startX, startY, startX + lengthX, startY - lengthY, 2);
-    arc(startX, startY, 20, -angleInDegs - 60, 120, 1);//bow
+
+    int lengthX2 = (int)(20*sin(angle));
+    int lengthY2 = (int)(20*cos(angle));
+  //left arm
+    moveto(startX, startY);
+    lineto(startX - lengthX, startY + lengthY, 2);
+    lineto(startX - lengthX + lengthX2, startY + lengthY + lengthY2, 2);
+//right arm
+    moveto(startX, startY);
+    lineto(startX + lengthY, startY + lengthX, 2);
+    lineto(startX - lengthX + lengthX2, startY + lengthY + lengthY2, 2);
+//club
+    angle += M_PI_4;
+    int clubHandleX = (startX + lengthY) - lengthX;
+    int clubHandleY = (startY + lengthX + lengthY);
+
+    setcolor(DARKGRAY);
+    moveto(clubHandleX, clubHandleY);
+    lineto(clubHandleX - (int)(27 * cos(angle)), clubHandleY + (int)(27 * sin(angle)), 2);
+    filled_circle(clubHandleX - (int)(27 * cos(angle)), clubHandleY + (int)(27 * sin(angle)), 5, DARKGRAY);
+    setcolor(WHITE);
 
     update_display();
 }
@@ -157,7 +175,7 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
 
     moveto(initialX, initialY);
 //=========================
-    while(posX <= resX && posX >= 0 && maxHeight != -1)
+    while(posX <= resX && posX >= 0 && maxHeight != -1) //while ball is on screen in x axis, and not stopped
     {
         maxHeight = posY;
         do
@@ -167,11 +185,12 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
 
             time = (posX - initialX) / velX;
             posY = (int)(initialY - (velY * time) + (gravity * time * time) / 2);
+
             //draw new ball white, draw over old ball in black
             filled_circle(prevX, prevY, 5, BLACK);
             filled_circle(posX, posY, 4, WHITE);
-
-            drawGround(resX, resY);//redraw ground in case black circle was drawn over it by accident
+            //redraw ground in case black circle was drawn over it by accident
+            drawGround(resX, resY);
             drawTarget(resX, resY);
 
             if(direction == 1) posX++;
