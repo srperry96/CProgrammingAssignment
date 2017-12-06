@@ -204,6 +204,26 @@ void settingsMenu(int resX, int resY)
     int menuSelection = getMenuSelection(resX, resY, 2);
 }
 
+void showEndScreen(int resX, int resY, int score)
+{
+    char scoreString[5];
+
+    sprintf(scoreString, "%d", score);
+    outtextxy(resX / 2 - 80, resY / 2 - 100,"GAME OVER");
+    outtextxy(resX / 2 - 80, resY / 2 - 60,"Score: ");
+    outtextxy(resX / 2, resY / 2 - 60, scoreString);
+    outtextxy(resX / 2 - 120, resY / 2 - 20, "Click to continue");
+    update_display();
+    //wait for a click
+    while(1)
+    {
+        wait_for_event();
+
+        if(event_mouse_button_down())
+            break;
+    }
+}
+
 void playGame(int resX, int resY)
 {
     int stickmanXPos = 50; //initial stickman position
@@ -232,31 +252,14 @@ void playGame(int resX, int resY)
         printf("\nCurrent Score: %d\n", score);
     }
 
-    char scoreString[5];
-    sprintf(scoreString, "%d", score);
-    outtextxy(resX / 2 - 80, resY / 2 - 100,"GAME OVER");
-    outtextxy(resX / 2 - 80, resY / 2 - 60,"Score: ");
-    outtextxy(resX / 2, resY / 2 - 60, scoreString);
-    outtextxy(resX / 2 - 120, resY / 2 - 20, "Click to continue");
-    update_display();
-    //wait for a click
-    while(1)
-    {
-        wait_for_event();
-
-        if(event_mouse_button_down())
-            break;
-    }
+    showEndScreen(resX, resY, score);
 
     checkAndSetNewHighScore(score, resX, resY);
     showHighScores(resX, resY);
 }
 
-
-int main(void)
+void setup(int resX, int resY)
 {
-    int resX = 800, resY = 600, exitFlag = 0; //Window resolution variables
-
     initwindow(resX, resY); //open graphics window
     initfont();//initialise text
     setcolor(WHITE);
@@ -268,6 +271,21 @@ int main(void)
     reg_display_events();
     reg_mouse_events();
     reg_keyboard_events();
+}
+
+void closeEverything()
+{
+    //close everything
+    closemouse();
+    closekeyboard();
+    closegraph();
+}
+
+int main(void)
+{
+    int resX = 800, resY = 600, exitFlag = 0; //Window resolution variables
+
+    setup(resX, resY);
 
     while(exitFlag == 0) //loop until exit game is pressed
     {
@@ -290,10 +308,8 @@ int main(void)
                 break;
         }
     }
-    //close everything
-    closemouse();
-    closekeyboard();
-    closegraph();
+
+    closeEverything();
 
     return 0;
 }

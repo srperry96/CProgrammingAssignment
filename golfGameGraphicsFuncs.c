@@ -16,6 +16,11 @@ void drawGround(int resX, int resY)
     filled_rectangle(0, resY-50, resX, resY, GREEN);
 }
 
+void drawBallAtFeet(int stickmanXPos, int resY)
+{
+    filled_circle(stickmanXPos + 5, resY - 50 - 5, 4, WHITE);
+}
+
 void drawTarget(int resX, int resY)
 {
     int scores[5] = {10, 20, 30, 20, 10};
@@ -79,6 +84,7 @@ void redrawEverything(int currentXPos, int resX, int resY) //redraw ground, targ
     drawStickman(currentXPos, resY);
     drawGround(resX, resY);
     drawTarget(resX, resY);
+    drawBallAtFeet(currentXPos, resY);
     update_display();
 }
 
@@ -164,8 +170,8 @@ void getColors(void)
 
 int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
 {
-    int initialX = stickmanXPos + 15;//x pos of stickman + extra to put ball in front of stickman
-    int initialY = resY - 50 - 10;//resY - 50 is ground level, - 10 so ball sits on top of ground
+    int initialX = stickmanXPos + 5;//x pos of stickman + extra to put ball in front of stickman
+    int initialY = resY - 50 - 5;//resY - 50 is ground level, - 10 so ball sits on top of ground
     int posX = initialX;
     int posY = initialY;
     int prevX = initialX, prevY = initialY;
@@ -189,9 +195,10 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
             //draw new ball white, draw over old ball in black
             filled_circle(prevX, prevY, 5, BLACK);
             filled_circle(posX, posY, 4, WHITE);
-            //redraw ground in case black circle was drawn over it by accident
+            //redraw ground and stickman in case black circle was drawn over it
             drawGround(resX, resY);
             drawTarget(resX, resY);
+            drawStickman(stickmanXPos, resY);
 
             if(direction == 1) posX++;
             else posX--;
