@@ -1,6 +1,6 @@
 #include <golfGameGraphicsFuncs.h>
 
-void drawStickman(int x_position, int y_position)
+void drawStickman(int x_position, int y_position, int fgColor)
 {
     y_position -= 120;//Y position calc: -70 for height of stickman, -50 for ground height = -120
     filled_circle(x_position, y_position, 10, WHITE);
@@ -42,7 +42,7 @@ void drawTarget(int resX, int resY)
     lineto(pos, resY - 40, 1);
 }
 
-void drawArmsAndClub(int startX, int resY, double power, float angle)
+void drawArmsAndClub(int startX, int resY, double power, float angle, int fgColor)
 {
     angle -= M_PI_4;
     //lengths of arm in x and y for specific angle
@@ -69,106 +69,152 @@ void drawArmsAndClub(int startX, int resY, double power, float angle)
     int clubHandleX = (startX + lengthY) - lengthX;
     int clubHandleY = (startY + lengthX + lengthY);
 
+    //change pen color to dark gray and draw club
     setcolor(DARKGRAY);
     moveto(clubHandleX, clubHandleY);
     lineto(clubHandleX - (int)(27 * cos(angle)), clubHandleY + (int)(27 * sin(angle)), 2);
     filled_circle(clubHandleX - (int)(27 * cos(angle)), clubHandleY + (int)(27 * sin(angle)), 5, DARKGRAY);
-    setcolor(WHITE);
+    //set pen color back to what it should be
+    switch(fgColor)
+    {
+        case 0: setcolor(WHITE);
+                break;
+        case 1: setcolor(RED);
+                break;
+        case 2: setcolor(CYAN);
+                break;
+        case 3: setcolor(YELLOW);
+                break;
+        default: break;
+    }
 
     update_display();
 }
 
-void redrawEverything(int currentXPos, int resX, int resY) //redraw ground, target, stickman
+void redrawEverything(int currentXPos, int resX, int resY, int fgColor) //redraw ground, target, stickman
 {
     cleardevice();
-    drawStickman(currentXPos, resY);
+    drawStickman(currentXPos, resY, fgColor);
     drawGround(resX, resY);
     drawTarget(resX, resY);
     drawBallAtFeet(currentXPos, resY);
     update_display();
 }
 
-void getColors(void)
+void changeColors(int colorToChange, int *colorValue, int resX, int resY) //color to change 0 = foreground, 1 = background
 {
-    bool flag = false;
-    char colorLetter;
+//foreground 0 1 2 3, white, red, cyan, yellow respectively
+//background 0 1 2 3, black, blue, lightgray, brown respectively
 
-    //choose background colour: black or white
-    do{
-        printf("Choose a colour for the background: (w)hite (b)lack\n");
-        scanf(" %c", &colorLetter);
+    int mouseXPos, mouseYPos;
+    int colorSquareTopLeft[4][2]; //top left xy coordinates of each colour square
+    int colorSquareSize = resX / 8; //size of color squares scales with resolution
 
-        switch(colorLetter)
+    cleardevice();
+    outtextxy(((resX / 2) - 40), 30, "Change Color");
+
+    //calculate top left coordinate for color squares
+    colorSquareTopLeft[0][0] = (resX / 2) - (2 * colorSquareSize);//x coord colour 1
+    colorSquareTopLeft[1][0] = (resX / 2) + colorSquareSize;
+    colorSquareTopLeft[2][0] = colorSquareTopLeft[0][0];
+    colorSquareTopLeft[3][0] = colorSquareTopLeft[1][0];
+
+    colorSquareTopLeft[0][1] = 50;
+    colorSquareTopLeft[1][1] = colorSquareTopLeft[0][1];
+    colorSquareTopLeft[2][1] = ((resY - 50) / 2) + colorSquareSize + 50;
+    colorSquareTopLeft[3][1] = colorSquareTopLeft[2][1];
+
+    //draw color squares
+    if(colorToChange == 0) //foreground
+    {
+        filled_rectangle(colorSquareTopLeft[0][0], colorSquareTopLeft[0][1], colorSquareTopLeft[0][0] + colorSquareSize,
+                         colorSquareTopLeft[0][1] + colorSquareSize, WHITE);
+        filled_rectangle(colorSquareTopLeft[1][0], colorSquareTopLeft[1][1], colorSquareTopLeft[1][0] + colorSquareSize,
+                         colorSquareTopLeft[1][1] + colorSquareSize, RED);
+        filled_rectangle(colorSquareTopLeft[2][0], colorSquareTopLeft[2][1], colorSquareTopLeft[2][0] + colorSquareSize,
+                         colorSquareTopLeft[2][1] + colorSquareSize, CYAN);
+        filled_rectangle(colorSquareTopLeft[3][0], colorSquareTopLeft[3][1], colorSquareTopLeft[3][0] + colorSquareSize,
+                         colorSquareTopLeft[3][1] + colorSquareSize, YELLOW);
+    }
+    else //background
+    {
+        filled_rectangle(colorSquareTopLeft[0][0], colorSquareTopLeft[0][1], colorSquareTopLeft[0][0] + colorSquareSize,
+                         colorSquareTopLeft[0][1] + colorSquareSize, BLACK);
+        filled_rectangle(colorSquareTopLeft[1][0], colorSquareTopLeft[1][1], colorSquareTopLeft[1][0] + colorSquareSize,
+                         colorSquareTopLeft[1][1] + colorSquareSize, BLUE);
+        filled_rectangle(colorSquareTopLeft[2][0], colorSquareTopLeft[2][1], colorSquareTopLeft[2][0] + colorSquareSize,
+                         colorSquareTopLeft[2][1] + colorSquareSize, LIGHTGRAY);
+        filled_rectangle(colorSquareTopLeft[3][0], colorSquareTopLeft[3][1], colorSquareTopLeft[3][0] + colorSquareSize,
+                         colorSquareTopLeft[3][1] + colorSquareSize, BROWN);
+        //draw borders for squares so background doesnt blend with color square
+        rectangle(colorSquareTopLeft[0][0], colorSquareTopLeft[0][1], colorSquareTopLeft[0][0] + colorSquareSize,
+                  colorSquareTopLeft[0][1] + colorSquareSize, 2);
+        rectangle(colorSquareTopLeft[1][0], colorSquareTopLeft[1][1], colorSquareTopLeft[1][0] + colorSquareSize,
+                  colorSquareTopLeft[1][1] + colorSquareSize, 2);
+        rectangle(colorSquareTopLeft[2][0], colorSquareTopLeft[2][1], colorSquareTopLeft[2][0] + colorSquareSize,
+                  colorSquareTopLeft[2][1] + colorSquareSize, 2);
+        rectangle(colorSquareTopLeft[3][0], colorSquareTopLeft[3][1], colorSquareTopLeft[3][0] + colorSquareSize,
+                  colorSquareTopLeft[3][1] + colorSquareSize, 2);
+    }
+
+    update_display();
+
+    while(1)
+    {
+        wait_for_event();
+
+        if(event_mouse_position_changed())
         {
-            case 'W':
-            case 'w': setbkcolor(WHITE);
-                      flag = false;
-                      break;
-            case 'B':
-            case 'b': setbkcolor(BLACK);
-                      flag = false;
-                      break;
-            default: printf("Invalid\n");
-                     flag = true;
-                     break;
+                get_mouse_coordinates();
+                mouseXPos = XMOUSE;
+                mouseYPos = YMOUSE;
         }
-    }while(flag == true);
-
-    flag = false; //reset flag
-
-    //choose stickman colour: red, green, blue
-    do{
-        printf("Choose a colour for the stickman: r g b\n");
-        scanf(" %c", &colorLetter);
-
-        switch(colorLetter)
+        else if(event_mouse_left_button_down())
         {
-            case 'R':
-            case 'r': setcolor(RED);
-                      flag = false;
-                      break;
-            case 'G':
-            case 'g': setcolor(GREEN);
-                      flag = false;
-                      break;
-            case 'B':
-            case 'b': setcolor(BLUE);
-                      flag = false;
-                      break;
-            default: printf("Invalid\n");
-                     flag = true;
-                     break;
+            //mouse is in x range of buttons 0 and 3
+            if((mouseXPos >= colorSquareTopLeft[0][0]) && (mouseXPos <= colorSquareTopLeft[0][0] + colorSquareSize))
+            {
+                //square 1
+                if((mouseYPos >= colorSquareTopLeft[0][1]) && (mouseYPos <= colorSquareTopLeft[0][1] + colorSquareSize))
+                {
+                    if(colorToChange == 0) setcolor(WHITE);
+                    else setbkcolor(BLACK);
+                    *colorValue = 0;
+                    break;
+                }
+                //square 3
+                else if((mouseYPos >= colorSquareTopLeft[2][1]) && (mouseYPos <= colorSquareTopLeft[2][1] + colorSquareSize))
+                {
+                    if(colorToChange == 0) setcolor(CYAN);
+                    else setbkcolor(LIGHTGRAY);
+                    *colorValue = 2;
+                    break;
+                }
+            } //mouse is in x range of buttons 2 and 4
+            else if((mouseXPos >= colorSquareTopLeft[1][0]) && (mouseXPos <= colorSquareTopLeft[1][0] + colorSquareSize))
+            {
+                 //square 2
+                if((mouseYPos >= colorSquareTopLeft[0][1]) && (mouseYPos <= colorSquareTopLeft[0][1] + colorSquareSize))
+                {
+                    if(colorToChange == 0) setcolor(RED);
+                    else setbkcolor(BLUE);
+                    *colorValue = 1;
+                    break;
+                }
+                //square 4
+                else if((mouseYPos >= colorSquareTopLeft[2][1]) && (mouseYPos <= colorSquareTopLeft[2][1] + colorSquareSize))
+                {
+                    if(colorToChange == 0) setcolor(YELLOW);
+                    else setbkcolor(BROWN);
+                    *colorValue = 3;
+                    break;
+                }
+            }
         }
-    }while(flag == true);
+    }
 }
-//OLD DRAW ARC CODE
-//int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
-//{
-//    int initialX = (stickmanXPos + 15);//x pos of stickman + 15 for length of arm
-//    int initialY = (resY - 95);//-120 to get stickman position + 25 to get arm position = -95
-//    int posX = initialX;
-//    int posY = initialY;
-//    float gravity = 9.81, time = 0;
-//
-//    moveto(initialX, initialY);
-//
-//    do
-//    {
-//        time = (posX - initialX) / velX;
-//        posY = (int)(initialY - (velY * time) + (gravity*time*time)/2);
-//        lineto(posX, posY, 1);
-//        posX++;
-//        pausefor(1); //wait 1ms
-//        update_display();//having update display here makes arc look like something being thrown
-//
-//
-//    } while( (posX <= resX) && (posY <= resY-51) ); //resY-51 not -50 so arc doesnt go through the ground
-//
-//    posX--; //undo posX++ from final loop through as it happens after drawing the arc
-//    return posX;
-//}
 
-int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
+int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor)
 {
     int initialX = stickmanXPos + 5;//x pos of stickman + extra to put ball in front of stickman
     int initialY = resY - 50 - 5;//resY - 50 is ground level, - 10 so ball sits on top of ground
@@ -192,13 +238,24 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY)
             time = (posX - initialX) / velX;
             posY = (int)(initialY - (velY * time) + (gravity * time * time) / 2);
 
-            //draw new ball white, draw over old ball in black
-            filled_circle(prevX, prevY, 5, BLACK);
+            //draw new ball white, draw over old ball in background color
+            switch(bgColor)
+            {
+                case 0: filled_circle(prevX, prevY, 5, BLACK);
+                        break;
+                case 1: filled_circle(prevX, prevY, 5, BLUE);
+                        break;
+                case 2: filled_circle(prevX, prevY, 5, LIGHTGRAY);
+                        break;
+                case 3: filled_circle(prevX, prevY, 5, BROWN);
+                        break;
+                default: break;
+            }
             filled_circle(posX, posY, 4, WHITE);
             //redraw ground and stickman in case black circle was drawn over it
             drawGround(resX, resY);
             drawTarget(resX, resY);
-            drawStickman(stickmanXPos, resY);
+            drawStickman(stickmanXPos, resY, fgColor);
 
             if(direction == 1) posX++;
             else posX--;

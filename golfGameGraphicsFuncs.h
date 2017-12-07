@@ -11,14 +11,14 @@ typedef struct
     char buttonText[20];
 } MenuButton;
 
-void drawStickman(int x_position, int y_position);
+void drawStickman(int x_position, int y_position, int fgColor);
 void drawGround(int resX, int resY);
 void drawTarget(int resX, int resY);
-void drawArmsAndClub(int startX, int resY, double power, float angle);
+void drawArmsAndClub(int startX, int resY, double power, float angle, int fgColor);
 void drawBallAtFeet(int stickmanXPos, int resY);
-void redrawEverything(int currentXPos, int resX, int resY);
-void getColors(void);
-int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY);
+void redrawEverything(int currentXPos, int resX, int resY, int fgColor);
+void changeColors(int colorToChange, int *colorValue, int resX, int resY);
+int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor);
 void drawPowerArrow(int mouseOldX, int mouseNewX, int mouseOldY, int mouseNewY, double power, float angle);
 void drawButton(MenuButton btn);
 

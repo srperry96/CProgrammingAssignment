@@ -3,7 +3,7 @@
 #include <golfGameGraphicsFuncs.h>
 #include <golfGameHighscoreFuncs.h>
 
-void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouseY, float launchAngle)
+void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouseY, float launchAngle, int fgColor)
 {
     while(1)
     {
@@ -14,8 +14,8 @@ void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouse
             if(*stickmanXPos >= 25) //make sure the stickman doesnt go off screen
             {
                 *stickmanXPos -= 5;
-                redrawEverything(*stickmanXPos, resX, resY);
-                drawArmsAndClub(*stickmanXPos, resY, 60.0, launchAngle);
+                redrawEverything(*stickmanXPos, resX, resY, fgColor);
+                drawArmsAndClub(*stickmanXPos, resY, 60.0, launchAngle, fgColor);
             }
         }
         else if(event_key_right_arrow())
@@ -23,8 +23,8 @@ void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouse
             if(*stickmanXPos <= (resX/2 - 20) ) // dont let stickman go past (halfway - 20) on screen
             {
                 *stickmanXPos += 5;
-                redrawEverything(*stickmanXPos, resX, resY);
-                drawArmsAndClub(*stickmanXPos, resY, 60.0, launchAngle);
+                redrawEverything(*stickmanXPos, resX, resY, fgColor);
+                drawArmsAndClub(*stickmanXPos, resY, 60.0, launchAngle, fgColor);
             }
         }
         else if(event_mouse_position_changed())
@@ -40,7 +40,7 @@ void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouse
     }
 }
 
-void getLaunchAngle(float *velX, float *velY, int mouseOldX, int mouseOldY, int resX, int resY, int *stickmanXPos, float *angle)
+void getLaunchAngle(float *velX, float *velY, int mouseOldX, int mouseOldY, int resX, int resY, int *stickmanXPos, float *angle, int fgColor)
 {
     int mouseNewX, mouseNewY;
     int xVal, yVal;
@@ -75,17 +75,17 @@ void getLaunchAngle(float *velX, float *velY, int mouseOldX, int mouseOldY, int 
 
 
             //redraw window with launch angle line
-            redrawEverything(*stickmanXPos, resX, resY);
+            redrawEverything(*stickmanXPos, resX, resY, fgColor);
             drawPowerArrow(mouseOldX, mouseNewX, mouseOldY, mouseNewY, power, *angle);
-            drawArmsAndClub(*stickmanXPos, resY, power, *angle);
+            drawArmsAndClub(*stickmanXPos, resY, power, *angle, fgColor);
 
             update_display();
         }
         else if(event_mouse_left_button_down()) //mouse button is released, so continue
         {
             cleardevice();
-            redrawEverything(*stickmanXPos, resX, resY);
-            drawArmsAndClub(*stickmanXPos, resY, power, *angle);
+            redrawEverything(*stickmanXPos, resX, resY, fgColor);
+            drawArmsAndClub(*stickmanXPos, resY, power, *angle, fgColor);
             break;
         }
     }
@@ -144,16 +144,19 @@ int getMenuSelection(int resX, int resY, int menuID)
         strcpy(buttonsArray[1].buttonText, "Highscores");
         strcpy(buttonsArray[2].buttonText, "Settings");
         strcpy(buttonsArray[3].buttonText, "Quit Game");
-        //(resY - 2 * buttonHeight) gives space for all buttons. Divide by num of buttons to get space on screen
-        //for each button and the space following it. subtract button height to get space between buttons
-        spaceBetweenButtons = ((resY - (2 * buttonHeight)) / numMenuItems) - buttonHeight;
     }
     else if(menuID == 2)//menuID 2 is settings menu
     {
-        //BG colour
-        //pen colour
-        //clear highscores?
+        numMenuItems = 3;
+        outtextxy(((resX / 2) - 40), 30, "Settings");
+        strcpy(buttonsArray[0].buttonText, "Colour 1");
+        strcpy(buttonsArray[1].buttonText, "Colour 2");
+        strcpy(buttonsArray[2].buttonText, "Clear Hiscores");
     }
+
+    //(resY - 2 * buttonHeight) gives space for all buttons. Divide by num of buttons to get space on screen
+    //for each button and the space following it. subtract button height to get space between buttons
+    spaceBetweenButtons = ((resY - (2 * buttonHeight)) / numMenuItems) - buttonHeight;
 
     //set up and draw all buttons
     cleardevice();
@@ -199,9 +202,24 @@ int getMenuSelection(int resX, int resY, int menuID)
     }
 }
 
-void settingsMenu(int resX, int resY)
+void settingsMenu(int resX, int resY, int *bgColor, int *fgColor)
 {
     int menuSelection = getMenuSelection(resX, resY, 2);
+
+    switch(menuSelection)
+    {
+        case 0: changeColors(0, fgColor, resX, resY);
+                break;
+        case 1: changeColors(1, bgColor, resX, resY);
+                break;
+        case 2: resetHighScores();
+                cleardevice();
+                outtextxy(resX/2 - 50, resY/2 - 20, "Highscores Reset");
+                update_display();
+                pausefor(500);
+                break;
+        default: break;
+    }
 }
 
 void showEndScreen(int resX, int resY, int score)
@@ -224,7 +242,7 @@ void showEndScreen(int resX, int resY, int score)
     }
 }
 
-void playGame(int resX, int resY)
+void playGame(int resX, int resY, int bgColor, int fgColor)
 {
     int stickmanXPos = 50; //initial stickman position
     int mouseX = 0, mouseY = 0;
@@ -234,8 +252,8 @@ void playGame(int resX, int resY)
 
     cleardevice();
     //draw initial screen
-    drawStickman(stickmanXPos, resY);
-    drawArmsAndClub(stickmanXPos, resY, 60, launchAngle);
+    drawStickman(stickmanXPos, resY, fgColor);
+    drawArmsAndClub(stickmanXPos, resY, 60, launchAngle, fgColor);
     drawGround(resX, resY);
     drawTarget(resX,resY);
     update_display();
@@ -245,9 +263,9 @@ void playGame(int resX, int resY)
     for(i = 0; i < 3; i++)
     {
         printf("\nMove stickman using left and right keys, then press enter\n");
-        moveStickman(&stickmanXPos, resX, resY, &mouseX, &mouseY, launchAngle);
-        getLaunchAngle(&velX, &velY, mouseX, mouseY, resX, resY, &stickmanXPos, &launchAngle);
-        landingPos = drawArc(stickmanXPos, resX, resY, velX, velY);
+        moveStickman(&stickmanXPos, resX, resY, &mouseX, &mouseY, launchAngle, fgColor);
+        getLaunchAngle(&velX, &velY, mouseX, mouseY, resX, resY, &stickmanXPos, &launchAngle, fgColor);
+        landingPos = drawArc(stickmanXPos, resX, resY, velX, velY, bgColor, fgColor);
         score += calculateScore(landingPos, resX);
         printf("\nCurrent Score: %d\n", score);
     }
@@ -284,6 +302,8 @@ void closeEverything()
 int main(void)
 {
     int resX = 800, resY = 600, exitFlag = 0; //Window resolution variables
+    int bgColor = 0; //background colour variable. 0 1 2 3, black, blue, lightgray, brown respectively
+    int fgColor = 0; //foreground colour variable. 0 1 2 3, white, red, cyan, yellow respectively
 
     setup(resX, resY);
 
@@ -296,11 +316,11 @@ int main(void)
 
         switch(menuSelection)
         {
-            case 0: playGame(resX, resY);
+            case 0: playGame(resX, resY, bgColor, fgColor);
                     break;
             case 1: showHighScores(resX, resY);
                     break;
-            case 2: settingsMenu(resX, resY);
+            case 2: settingsMenu(resX, resY, &bgColor, &fgColor);
                     break;
             case 3: exitFlag = 1;
                     break;
