@@ -3,7 +3,20 @@
 void drawStickman(int x_position, int y_position, int fgColor)
 {
     y_position -= 120;//Y position calc: -70 for height of stickman, -50 for ground height = -120
-    filled_circle(x_position, y_position, 10, WHITE);
+    //draw head in correct color
+    switch(fgColor)
+    {
+        case 0: filled_circle(x_position, y_position, 10, WHITE);
+                break;
+        case 1: filled_circle(x_position, y_position, 10, RED);
+                break;
+        case 2: filled_circle(x_position, y_position, 10, CYAN);
+                break;
+        case 3: filled_circle(x_position, y_position, 10, YELLOW);
+                break;
+        default: break;
+    }
+
     line(x_position, y_position+10, x_position, y_position+40, 2); //body
     line(x_position, y_position+40, x_position - 10, y_position+70, 2);//leftleg
     line(x_position, y_position+40, x_position + 10, y_position+70, 2);//rightleg
@@ -42,7 +55,7 @@ void drawTarget(int resX, int resY)
     lineto(pos, resY - 40, 1);
 }
 
-void drawArmsAndClub(int startX, int resY, double power, float angle, int fgColor)
+void drawArmsAndClub(int startX, int resY, float angle, int fgColor)
 {
     angle -= M_PI_4;
     //lengths of arm in x and y for specific angle
@@ -51,11 +64,8 @@ void drawArmsAndClub(int startX, int resY, double power, float angle, int fgColo
 
     int startY = resY - 120 + 15; //same calculation as in drawStickman function
 
-    printf("\nX:%d, %d; Y:%d, %d; P:%0.2f\n", startX, lengthX, startY, lengthY, power); //debugging
-
-
-    int lengthX2 = (int)(20*sin(angle));
-    int lengthY2 = (int)(20*cos(angle));
+    int lengthX2 = (int)(20 * sin(angle));
+    int lengthY2 = (int)(20 * cos(angle));
   //left arm
     moveto(startX, startY);
     lineto(startX - lengthX, startY + lengthY, 2);
@@ -227,7 +237,7 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
 
     moveto(initialX, initialY);
 //=========================
-    while(posX <= resX && posX >= 0 && maxHeight != -1) //while ball is on screen in x axis, and not stopped
+    while(posX <= resX && posX >= 0 && maxHeight != -1 ) //while ball is on screen in x axis, and not stopped
     {
         maxHeight = posY;
         do
@@ -309,7 +319,7 @@ void drawPowerArrow(int mouseOldX, int mouseNewX, int mouseOldY, int mouseNewY, 
     outtextxy(mouseOldX+10, mouseOldY+20, powerLabel);
     outtextxy(mouseOldX+10, mouseOldY-10, angleLabel);
 
-    //drawing the arrow =================only works pointing up and right, between 0 and 90
+//    //drawing the arrow =================only works pointing up and right, between 0 and 90
     float headAngle;
 
     headAngle = angle + M_PI_4;

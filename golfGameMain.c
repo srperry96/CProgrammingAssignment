@@ -3,48 +3,26 @@
 #include <golfGameGraphicsFuncs.h>
 #include <golfGameHighscoreFuncs.h>
 
-void moveStickman(int *stickmanXPos, int resX, int resY, int *mouseX, int *mouseY, float launchAngle, int fgColor)
+void drawAngleArrow(int stickmanXPos, int resY, float angle)
 {
-    while(1)
-    {
-        wait_for_event();
+    int lineEndX, lineEndY;
 
-        if(event_key_left_arrow())
-        {
-            if(*stickmanXPos >= 25) //make sure the stickman doesnt go off screen
-            {
-                *stickmanXPos -= 5;
-                redrawEverything(*stickmanXPos, resX, resY, fgColor);
-                drawArmsAndClub(*stickmanXPos, resY, 60.0, launchAngle, fgColor);
-            }
-        }
-        else if(event_key_right_arrow())
-        {
-            if(*stickmanXPos <= (resX/2 - 20) ) // dont let stickman go past (halfway - 20) on screen
-            {
-                *stickmanXPos += 5;
-                redrawEverything(*stickmanXPos, resX, resY, fgColor);
-                drawArmsAndClub(*stickmanXPos, resY, 60.0, launchAngle, fgColor);
-            }
-        }
-        else if(event_mouse_position_changed())
-        {
-            get_mouse_coordinates();
-            *mouseX = XMOUSE;
-            *mouseY = YMOUSE;
-        }
-        else if(event_mouse_button_down())
-        {
-            break;
-        }
-    }
+    //draw shaft of arrow
+    moveto(stickmanXPos + 5, resY - 50 - 5);
+    lineEndX = (stickmanXPos + 5) + (int)(40 * cos(angle));
+    lineEndY = (resY - 50 - 5) - (int)(40 * sin(angle));
+    lineto(lineEndX, lineEndY, 2);
+
+    //draw head of arrow
+    line(lineEndX, lineEndY, (lineEndX - (int)(10 * sin(angle + M_PI_4))), (lineEndY - (int)(10 * cos(angle + M_PI_4))), 2);
+    line(lineEndX, lineEndY, (lineEndX + (int)(10 * sin(angle - M_PI_4))), (lineEndY + (int)(10 * cos(angle - M_PI_4))), 2);
 }
 
-void getLaunchAngle(float *velX, float *velY, int mouseOldX, int mouseOldY, int resX, int resY, int *stickmanXPos, float *angle, int fgColor)
+float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor)
 {
-    int mouseNewX, mouseNewY;
+    int mouseX, mouseY;
     int xVal, yVal;
-    double power;
+    double angle = M_PI_4;
 
     while(1)
     {
@@ -53,45 +31,113 @@ void getLaunchAngle(float *velX, float *velY, int mouseOldX, int mouseOldY, int 
         if(event_mouse_position_changed())
         {
             get_mouse_coordinates();
-            mouseNewX = XMOUSE;
-            mouseNewY = YMOUSE;
+            mouseX = XMOUSE;
+            mouseY = YMOUSE;
 
-            //ensure positive x and y values
-            if(mouseOldX >= mouseNewX)
-                xVal = mouseOldX - mouseNewX;
-            else
-                xVal = mouseNewX - mouseOldX;
+            xVal = mouseX - (stickmanXPos + 5); //stickmanXPos + 5 is centre of golf ball
+            yVal = resY - 50 - 5 - mouseY; //resY-50-5 is centre of golf ball
 
-            if(mouseOldY >= mouseNewY)
-                yVal = mouseOldY - mouseNewY;
-            else
-                yVal = mouseNewY - mouseOldY;
+            angle = atan2(yVal, xVal);
 
+            //limit angle to 90 degrees (anticlockwise from horizontal)
+            if(angle < 0) angle = 0;
+            else if(angle > M_PI_2) angle = M_PI_2;
 
-            power = sqrt( (xVal * xVal) + (yVal * yVal) ); //pythagoras to calculate length of launch line
-
-
-            *angle = atan2(yVal, xVal);
-
-
-            //redraw window with launch angle line
-            redrawEverything(*stickmanXPos, resX, resY, fgColor);
-            drawPowerArrow(mouseOldX, mouseNewX, mouseOldY, mouseNewY, power, *angle);
-            drawArmsAndClub(*stickmanXPos, resY, power, *angle, fgColor);
-
+            //redraw window with launch angle arrow
+            redrawEverything(stickmanXPos, resX, resY, fgColor);
+            drawAngleArrow(stickmanXPos, resY, angle);
+            drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             update_display();
         }
-        else if(event_mouse_left_button_down()) //mouse button is released, so continue
+        else if(event_mouse_button_down()) //mouse button is clicked, so continue
         {
             cleardevice();
-            redrawEverything(*stickmanXPos, resX, resY, fgColor);
-            drawArmsAndClub(*stickmanXPos, resY, power, *angle, fgColor);
+            redrawEverything(stickmanXPos, resX, resY, fgColor);
+            drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             break;
         }
     }
 
-    *velX = (power/2) * cos(*angle);
-    *velY = (power/2) * sin(*angle);
+    return angle;
+}
+
+void drawPowerBars(int power, int resY)
+{
+    int height = (resY - 150)/ 18;
+    int topY, bottomY, i;
+
+    for(i = 0; i < power; i++)
+    {
+        bottomY = resY - 140 - ((i-1) * height);
+        topY = resY - 140 - (i * height);
+        //power bar fill
+        filled_rectangle(120, topY, 170, bottomY, RED);
+        //power bar border
+        rectangle(120, topY, 170, bottomY, 2);
+    }
+}
+
+void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle)
+{
+    int mouseX, mouseY, i, power = 0;
+    float angle = M_PI_2;
+
+    //draw initial power bar
+    drawPowerBars(1, resY);
+    update_display();
+
+    while(1)
+    {
+        wait_for_event();
+
+        if(event_mouse_position_changed())
+        {
+            get_mouse_coordinates();
+            mouseX = XMOUSE;
+            mouseY = YMOUSE;
+
+            //loop through 18 regions of y axis to get a value for power
+            //(split into 18 to give 5 degrees per power level)
+            for(i = 0; i < 18; i++)
+            {
+                if((mouseY >= (i * resY / 18)) && (mouseY < (i + 1)*(resY / 18)))
+                {
+                    power = i+1;
+                    break;
+                }
+            }
+
+
+            angle = ((M_PI_2 / 18) * (power));
+
+            //redraw window with club in correct position
+            redrawEverything(stickmanXPos, resX, resY, fgColor);
+            drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
+            drawPowerBars(19 - power, resY);
+            update_display();
+        }
+        else if(event_mouse_button_down()) //mouse button is clicked, so continue
+        {
+            //animate the golf club swinging from current position to its lowest point
+            for(i = power; i < 19; i++)
+            {
+                angle = ((M_PI_2 / 18) * i);
+                cleardevice();
+                redrawEverything(stickmanXPos, resX, resY, fgColor);
+                drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
+                pausefor(5);
+            }
+            break;
+        }
+    }
+    //power regions calculated in wrong order (1 at top, 9 at bottom), so 19-power gives correct power value
+    power = 19 - power;
+
+    //scale power
+    power *= 5;
+    //calculate velocity x and y components
+    *velX = power * cos(launchAngle);
+    *velY = power * sin(launchAngle);
 }
 
 int calculateScore(int landingPos, int resX)
@@ -110,7 +156,7 @@ int calculateScore(int landingPos, int resX)
         if( (landingPos > targetZoneBands[i]) && (landingPos <= targetZoneBands[i+1]) )
         {
             scoreZone = i + 1;
-            break; //break out of loop if zone has found - saves looping through all remaining bands for no reason
+            break; //break out of loop if zone has been found - saves looping through all remaining bands for no reason
         }
     }
 
@@ -118,14 +164,10 @@ int calculateScore(int landingPos, int resX)
     {
         case 1:
         case 5: return 10;
-                break;
         case 2:
         case 4: return 20;
-                break;
         case 3: return 30;
-                break;
         default: return 0;
-                 break;
     }
 }
 
@@ -216,23 +258,14 @@ void settingsMenu(int resX, int resY, int *bgColor, int *fgColor)
                 cleardevice();
                 outtextxy(resX/2 - 50, resY/2 - 20, "Highscores Reset");
                 update_display();
-                pausefor(500);
+                pausefor(800);
                 break;
         default: break;
     }
 }
 
-void showEndScreen(int resX, int resY, int score)
+void waitForClick(void)
 {
-    char scoreString[5];
-
-    sprintf(scoreString, "%d", score);
-    outtextxy(resX / 2 - 80, resY / 2 - 100,"GAME OVER");
-    outtextxy(resX / 2 - 80, resY / 2 - 60,"Score: ");
-    outtextxy(resX / 2, resY / 2 - 60, scoreString);
-    outtextxy(resX / 2 - 120, resY / 2 - 20, "Click to continue");
-    update_display();
-    //wait for a click
     while(1)
     {
         wait_for_event();
@@ -242,32 +275,47 @@ void showEndScreen(int resX, int resY, int score)
     }
 }
 
+void showEndScreen(int resX, int resY, int score)
+{
+    char scoreString[5];
+
+    cleardevice();
+    sprintf(scoreString, "%d", score);
+    outtextxy(resX / 2 - 80, resY / 2 - 100,"GAME OVER");
+    outtextxy(resX / 2 - 80, resY / 2 - 60,"Score: ");
+    outtextxy(resX / 2, resY / 2 - 60, scoreString);
+    outtextxy(resX / 2 - 120, resY / 2 - 20, "Click to continue");
+    update_display();
+    waitForClick();
+}
+
 void playGame(int resX, int resY, int bgColor, int fgColor)
 {
-    int stickmanXPos = 50; //initial stickman position
-    int mouseX = 0, mouseY = 0;
-    float velX = 60;
-    float velY = 60; //launch velocity components default to 45 degree angle
+    int stickmanXPos = 70; //initial stickman position
+    float velX = 60, velY = 60; //launch velocity components default to 45 degree angle
     float launchAngle = 0.0;
 
     cleardevice();
     //draw initial screen
     drawStickman(stickmanXPos, resY, fgColor);
-    drawArmsAndClub(stickmanXPos, resY, 60, launchAngle, fgColor);
+    drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
     drawGround(resX, resY);
     drawTarget(resX,resY);
     update_display();
 
     int i, landingPos, score = 0;
+    char scoreString[50];
 
     for(i = 0; i < 3; i++)
     {
-        printf("\nMove stickman using left and right keys, then press enter\n");
-        moveStickman(&stickmanXPos, resX, resY, &mouseX, &mouseY, launchAngle, fgColor);
-        getLaunchAngle(&velX, &velY, mouseX, mouseY, resX, resY, &stickmanXPos, &launchAngle, fgColor);
+        launchAngle = getLaunchAngle(resX, resY, stickmanXPos, fgColor);
+        getPower(&velX, &velY, stickmanXPos, resX, resY, fgColor, launchAngle);
         landingPos = drawArc(stickmanXPos, resX, resY, velX, velY, bgColor, fgColor);
         score += calculateScore(landingPos, resX);
-        printf("\nCurrent Score: %d\n", score);
+        sprintf(scoreString, "Current Score: %d. Click to continue", score);
+        outtextxy(resX / 2 - 150, resY/3, scoreString);
+        update_display();
+        waitForClick();//ensure previous clicks dont carry through and start next turn accidentally
     }
 
     showEndScreen(resX, resY, score);
@@ -278,11 +326,13 @@ void playGame(int resX, int resY, int bgColor, int fgColor)
 
 void setup(int resX, int resY)
 {
-    initwindow(resX, resY); //open graphics window
-    initfont();//initialise text
+    //graphics setup
+    initwindow(resX, resY);
+    initfont();
     setcolor(WHITE);
-    //getColors(); //get background and pen colors
+    setbkcolor(BLACK);
 
+    //mouse and keyboard setup
     initmouse();
     initkeyboard();
     create_event_queue();
@@ -312,7 +362,6 @@ int main(void)
         cleardevice();
         //get menu button selection
         int menuSelection = getMenuSelection(resX, resY, 1); //1 is main menu
-        printf("\n\nMenu selection is: %d\n", menuSelection);
 
         switch(menuSelection)
         {

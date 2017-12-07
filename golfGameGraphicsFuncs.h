@@ -14,7 +14,7 @@ typedef struct
 void drawStickman(int x_position, int y_position, int fgColor);
 void drawGround(int resX, int resY);
 void drawTarget(int resX, int resY);
-void drawArmsAndClub(int startX, int resY, double power, float angle, int fgColor);
+void drawArmsAndClub(int startX, int resY, float angle, int fgColor);
 void drawBallAtFeet(int stickmanXPos, int resY);
 void redrawEverything(int currentXPos, int resX, int resY, int fgColor);
 void changeColors(int colorToChange, int *colorValue, int resX, int resY);
