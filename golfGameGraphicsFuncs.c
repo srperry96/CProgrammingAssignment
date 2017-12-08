@@ -1,4 +1,5 @@
 #include <golfGameGraphicsFuncs.h>
+#include <golfGamePlayFuncs.h>
 
 void drawStickman(int x_position, int y_position, int fgColor)
 {
@@ -98,7 +99,7 @@ void drawArmsAndClub(int startX, int resY, float angle, int fgColor)
         default: break;
     }
 
-    update_display();
+//    update_display();
 }
 
 void redrawEverything(int currentXPos, int resX, int resY, int fgColor) //redraw ground, target, stickman, ball
@@ -108,20 +109,20 @@ void redrawEverything(int currentXPos, int resX, int resY, int fgColor) //redraw
     drawGround(resX, resY);
     drawTarget(resX, resY);
     drawBallAtFeet(currentXPos, resY);
-    update_display();
+//    update_display();
 }
 
 void changeColors(int colorToChange, int *colorValue, int resX, int resY) //color to change 0 = foreground, 1 = background
 {
 //foreground 0 1 2 3, white, red, cyan, yellow respectively
-//background 0 1 2 3, black, blue, lightgray, brown respectively
+//background 0 1 2 3, black, blue, lightgray, magenta respectively
 
     int mouseXPos, mouseYPos;
     int colorSquareTopLeft[4][2]; //top left xy coordinates of each colour square
     int colorSquareSize = resX / 8; //size of color squares scales with resolution
 
     cleardevice();
-    outtextxy(((resX / 2) - 40), 30, "Change Color");
+    outtextxy(((resX / 2) - 40), 30, "Change Colour");
 
     //calculate top left coordinate for color squares
     colorSquareTopLeft[0][0] = (resX / 2) - (2 * colorSquareSize);//x coord colour 1
@@ -129,9 +130,9 @@ void changeColors(int colorToChange, int *colorValue, int resX, int resY) //colo
     colorSquareTopLeft[2][0] = colorSquareTopLeft[0][0];
     colorSquareTopLeft[3][0] = colorSquareTopLeft[1][0];
 
-    colorSquareTopLeft[0][1] = 50;
+    colorSquareTopLeft[0][1] = 150;
     colorSquareTopLeft[1][1] = colorSquareTopLeft[0][1];
-    colorSquareTopLeft[2][1] = ((resY - 50) / 2) + colorSquareSize + 50;
+    colorSquareTopLeft[2][1] = ((resY - 150) / 2) + 150;
     colorSquareTopLeft[3][1] = colorSquareTopLeft[2][1];
 
     //draw color squares
@@ -155,7 +156,7 @@ void changeColors(int colorToChange, int *colorValue, int resX, int resY) //colo
         filled_rectangle(colorSquareTopLeft[2][0], colorSquareTopLeft[2][1], colorSquareTopLeft[2][0] + colorSquareSize,
                          colorSquareTopLeft[2][1] + colorSquareSize, LIGHTGRAY);
         filled_rectangle(colorSquareTopLeft[3][0], colorSquareTopLeft[3][1], colorSquareTopLeft[3][0] + colorSquareSize,
-                         colorSquareTopLeft[3][1] + colorSquareSize, BROWN);
+                         colorSquareTopLeft[3][1] + colorSquareSize, MAGENTA);
         //draw borders for squares so background doesnt blend with color square
         rectangle(colorSquareTopLeft[0][0], colorSquareTopLeft[0][1], colorSquareTopLeft[0][0] + colorSquareSize,
                   colorSquareTopLeft[0][1] + colorSquareSize, 2);
@@ -215,7 +216,7 @@ void changeColors(int colorToChange, int *colorValue, int resX, int resY) //colo
                 else if((mouseYPos >= colorSquareTopLeft[2][1]) && (mouseYPos <= colorSquareTopLeft[2][1] + colorSquareSize))
                 {
                     if(colorToChange == 0) setcolor(YELLOW);
-                    else setbkcolor(BROWN);
+                    else setbkcolor(MAGENTA);
                     *colorValue = 3;
                     break;
                 }
@@ -224,7 +225,7 @@ void changeColors(int colorToChange, int *colorValue, int resX, int resY) //colo
     }
 }
 
-int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor)
+int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor, int level, ObstacleTree tree)
 {
     int initialX = stickmanXPos + 5;//x pos of stickman + extra to put ball in front of stickman
     int initialY = resY - 50 - 5;//resY - 50 is ground level, - 10 so ball sits on top of ground
@@ -235,7 +236,7 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
     float gravity = 9.81, time = 0;
 
     moveto(initialX, initialY);
-//=========================
+
     while(posX <= resX && posX >= 0 && maxHeight != -1 ) //while ball is on screen in x axis, and not stopped
     {
         maxHeight = posY;
@@ -250,13 +251,13 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
             //draw over old ball in background color
             switch(bgColor)
             {
-                case 0: filled_circle(prevX, prevY, 5, BLACK);
+                case 0: filled_circle(prevX, prevY, 7, BLACK);
                         break;
-                case 1: filled_circle(prevX, prevY, 5, BLUE);
+                case 1: filled_circle(prevX, prevY, 7, BLUE);
                         break;
-                case 2: filled_circle(prevX, prevY, 5, LIGHTGRAY);
+                case 2: filled_circle(prevX, prevY, 7, LIGHTGRAY);
                         break;
-                case 3: filled_circle(prevX, prevY, 5, BROWN);
+                case 3: filled_circle(prevX, prevY, 7, BROWN);
                         break;
                 default: break;
             }
@@ -267,6 +268,7 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
             drawTarget(resX, resY);
             drawStickman(stickmanXPos, resY, fgColor);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
+            drawObstacles(level, resX, resY, tree);
 
             if(direction == 1) posX++;
             else posX--;
@@ -276,15 +278,13 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
 
             if(posY < maxHeight) maxHeight = posY; //track max height (min y value) of current bounce
 
-            if(posX > resX - 20)
-            {
-                obstacleHit = 1;
-                break;
-            }
+            //check if an obstacle has been hit. if yes, break out of loop
+            obstacleHit = checkObstacleHit(resX, resY, posX, posY, level, tree);
+            if(obstacleHit != 0) break;
 
-        } while(posY <= resY - 54); //resY-54 not -50 so arc doesnt go through the ground
+        } while(posY <= resY - 54); //resY - 54 (not -50) so ball (radius 4) doesnt go through the ground
 
-        //if bouncing off obstacle not ground
+        //if bouncing off obstacle vertical
         if(obstacleHit == 1)
         {
             initialX = posX;
@@ -294,15 +294,44 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
             obstacleHit = 0;
             direction = abs(direction - 1); //change direction from 0 to 1 or vice versa
         }
-        else //if bouncing off ground
+        //else if bouncing off obstacle horizontal
+        else if(obstacleHit == 2)
         {
+            initialX = posX;
+            initialY = posY;
+            velY *= 0.6;
+            obstacleHit = 0;
+        }
+        //else if ball has landed in water
+        else if(obstacleHit == 3)
+        {
+            //draw over old ball in background color, then play sinking animation
+            switch(bgColor)
+            {
+                case 0: filled_circle(prevX, prevY, 5, BLACK);
+                        break;
+                case 1: filled_circle(prevX, prevY, 5, BLUE);
+                        break;
+                case 2: filled_circle(prevX, prevY, 5, LIGHTGRAY);
+                        break;
+                case 3: filled_circle(prevX, prevY, 5, BROWN);
+                        break;
+                default: break;
+            }
+            ballSinkAnimation(posX, resX, resY);
+            maxHeight = -1;
+        }
+        //else ball bounces off ground
+        else
+        {
+            initialX = posX;
             initialY = resY - 55;
             velY *= 0.6;
-            initialX = posX;
+            obstacleHit = 0;
         }
-        if(maxHeight > resY - 50 - 6) maxHeight = -1; //if max height reached by the ball is less than 10 pixels above the ground, count that as stopping
+        //if max height reached by the ball is less than 6 pixels above the ground, count that as stopping
+        if(maxHeight > resY - 50 - 6) maxHeight = -1;
     }
-//===========================
     return posX;
 }
 
@@ -385,4 +414,29 @@ void showEndScreen(int resX, int resY, int score)
     outtextxy(resX / 2 - 100, resY / 2 - 20, "Click to continue");
     update_display();
     waitForClick();
+}
+
+void drawObstacles(int level, int resX, int resY, ObstacleTree tree)
+{
+    if(level == 2)
+    {
+        filled_rectangle(tree.trunkLeftX, resY - 50 - tree.trunkHeight, tree.trunkLeftX + 50, resY - 50, BROWN); //trunk
+        filled_circle(tree.trunkLeftX + 55, resY - 50 - tree.trunkHeight, 40, GREEN); //right circle
+        filled_circle(tree.trunkLeftX - 5, resY - 50 - tree.trunkHeight, 40, GREEN); //left circle
+        filled_circle(tree.trunkLeftX + 25, resY - 50 - tree.trunkHeight - 30, 40, GREEN); //middle circle
+    }
+    else if(level == 3)
+        filled_rectangle(resX / 2 - 200, resY - 50, resX / 2 + 100, resY, CYAN);//water
+}
+
+void ballSinkAnimation(int posX, int resX, int resY)
+{
+    int i;
+    for(i = 5; i < 55; i++)
+    {
+        filled_rectangle(resX / 2 - 200, resY - 50, resX / 2 + 100, resY, CYAN);//water
+        filled_circle(posX, resY - 50 + i, 4, WHITE);
+        update_display();
+        pausefor(20);
+    }
 }

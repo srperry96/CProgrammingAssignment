@@ -1,6 +1,64 @@
 #include <golfGamePlayFuncs.h>
 
-float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor)
+void playGame(int resX, int resY, int bgColor, int fgColor)
+{
+    int level = 1; //variable to indicate what level to load / what graphics to display
+    int stickmanXPos = 70; //initial stickman position
+    float velX = 60, velY = 60; //launch velocity components default to 45 degree angle
+    float launchAngle = 0.0;
+
+    cleardevice();
+    //draw initial screen
+    drawStickman(stickmanXPos, resY, fgColor);
+    drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
+    drawGround(resX, resY);
+    drawTarget(resX,resY);
+    update_display();
+
+    //setup tree obstacle
+    ObstacleTree tree;
+    tree.trunkLeftX = resX/2 - 50;
+    tree.trunkHeight = 150;
+    tree.trunkWidth = 50;
+    tree.leafBottomY = resY - 50 - 110;
+    tree.leafLeftX = tree.trunkLeftX - 45;
+    tree.leafWidth = 140;
+    tree.leafHeight = 80;
+    tree.repelHeight = 220;
+    tree.repelWidth = 80;
+
+
+    int i, landingPos, score = 0;
+    char scoreString[50];
+
+    for(i = 0; i < 9; i++)
+    {
+        level = (i / 3) + 1; //we play 3 balls per level
+        drawObstacles(level, resX, resY, tree);
+        update_display();
+
+        //get launch angle and power for this turn
+        launchAngle = getLaunchAngle(resX, resY, stickmanXPos, fgColor, level, tree);
+        getPower(&velX, &velY, stickmanXPos, resX, resY, fgColor, launchAngle, level, tree);
+
+        //draw ball movement for this turn
+        landingPos = drawShot(stickmanXPos, resX, resY, velX, velY, bgColor, fgColor, level, tree);
+
+        //calculate score, display and wait for a click to continue
+        score += calculateScore(landingPos, resX);
+        sprintf(scoreString, "Current Score: %d. Click to continue", score);
+        outtextxy(resX / 2 - 150, resY/3, scoreString);
+        update_display();
+        waitForClick();//ensure previous clicks don't carry through and start next turn accidentally
+    }
+
+    showEndScreen(resX, resY, score);
+
+    checkAndSetNewHighScore(score, resX, resY);
+    showHighScores(resX, resY);
+}
+
+float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int level, ObstacleTree tree)
 {
     int mouseX, mouseY;
     int xVal, yVal;
@@ -29,6 +87,7 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor)
             redrawEverything(stickmanXPos, resX, resY, fgColor);
             drawAngleArrow(stickmanXPos, resY, angle);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
+            drawObstacles(level, resX, resY, tree);
             update_display();
         }
         else if(event_mouse_button_down()) //mouse button is clicked, so continue
@@ -36,6 +95,8 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor)
             cleardevice();
             redrawEverything(stickmanXPos, resX, resY, fgColor);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
+            drawObstacles(level, resX, resY, tree);
+            update_display();
             break;
         }
     }
@@ -43,7 +104,7 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor)
     return angle;
 }
 
-void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle)
+void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle, int level, ObstacleTree tree)
 {
     int mouseY, i, power = 0;
     float angle = M_PI_2;
@@ -79,6 +140,7 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
             redrawEverything(stickmanXPos, resX, resY, fgColor);
             drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
             drawPowerBars(19 - power, resY);
+            drawObstacles(level, resX, resY, tree);
             update_display();
         }
         else if(event_mouse_button_down()) //mouse button is clicked, so continue
@@ -90,6 +152,8 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
                 cleardevice();
                 redrawEverything(stickmanXPos, resX, resY, fgColor);
                 drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
+                drawObstacles(level, resX, resY, tree);
+                update_display();
                 pausefor(5);
             }
             break;
@@ -103,6 +167,32 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
     //calculate velocity x and y components
     *velX = power * cos(launchAngle);
     *velY = power * sin(launchAngle);
+}
+
+int checkObstacleHit(int resX, int resY, int posX, int posY, int level, ObstacleTree tree)
+{
+    if(posX > resX - 4) //ball bounces off right side of screen
+        return 1;
+    else if(level == 2) // level 2 - tree
+    {
+        //hit trunk from left
+        if(((posX >= tree.trunkLeftX) && (posX < tree.trunkLeftX + 10) && (posY >= tree.leafBottomY) && (posY < resY - 50))
+        //hit trunk from right
+        || ((posX > tree.trunkLeftX + tree.trunkWidth - 10) && (posX <= tree.trunkLeftX + tree.trunkWidth) && (posY >= tree.leafBottomY) && (posY < resY - 50))
+        //hit leaf from left
+        || ((posX >= tree.leafLeftX) && (posX < tree.leafLeftX + 10) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY))
+        //hit leaf from right
+        || ((posX > tree.leafLeftX + tree.leafWidth - 10) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY)))
+            return 1;
+        //hit leaf from top
+        else if((posX > tree.trunkLeftX - 15) && (posX < tree.trunkLeftX + tree.trunkWidth + 15) && (posY >= resY - 50 - tree.repelHeight) && (posY < resY - 50 - tree.repelHeight + 10))
+            return 2;
+    }
+    else if(level == 3) //level 3 - water
+        if((posY >= resY - 55) && (posX >= resX / 2 - 200 + 5) && (posX < resX / 2 + 100 - 5))
+            return 3;
+
+    return 0;
 }
 
 int calculateScore(int landingPos, int resX)
@@ -147,41 +237,6 @@ void waitForClick(void)
     }
 }
 
-void playGame(int resX, int resY, int bgColor, int fgColor)
-{
-    int stickmanXPos = 70; //initial stickman position
-    float velX = 60, velY = 60; //launch velocity components default to 45 degree angle
-    float launchAngle = 0.0;
-
-    cleardevice();
-    //draw initial screen
-    drawStickman(stickmanXPos, resY, fgColor);
-    drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
-    drawGround(resX, resY);
-    drawTarget(resX,resY);
-    update_display();
-
-    int i, landingPos, score = 0;
-    char scoreString[50];
-
-    for(i = 0; i < 3; i++)
-    {
-        launchAngle = getLaunchAngle(resX, resY, stickmanXPos, fgColor);
-        getPower(&velX, &velY, stickmanXPos, resX, resY, fgColor, launchAngle);
-        landingPos = drawArc(stickmanXPos, resX, resY, velX, velY, bgColor, fgColor);
-        score += calculateScore(landingPos, resX);
-        sprintf(scoreString, "Current Score: %d. Click to continue", score);
-        outtextxy(resX / 2 - 150, resY/3, scoreString);
-        update_display();
-        waitForClick();//ensure previous clicks dont carry through and start next turn accidentally
-    }
-
-    showEndScreen(resX, resY, score);
-
-    checkAndSetNewHighScore(score, resX, resY);
-    showHighScores(resX, resY);
-}
-
 void setup(int resX, int resY)
 {
     //graphics setup
@@ -206,5 +261,3 @@ void closeEverything(void)
     closekeyboard();
     closegraph();
 }
-
-

@@ -6,8 +6,8 @@
 int main(void)
 {
     int resX = 800, resY = 600, exitFlag = 0; //Window resolution variables and flag for if exit has been clicked
-    int bgColor = 0; //background colour variable. 0 1 2 3, black, blue, lightgray, brown respectively
     int fgColor = 0; //foreground colour variable. 0 1 2 3, white, red, cyan, yellow respectively
+    int bgColor = 0; //background colour variable. 0 1 2 3, black, blue, lightgray, magenta respectively
 
     setup(resX, resY);
 
