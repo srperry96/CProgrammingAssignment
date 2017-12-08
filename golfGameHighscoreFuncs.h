@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <golfGameGraphicsFuncs.h>
 
 typedef struct
 {

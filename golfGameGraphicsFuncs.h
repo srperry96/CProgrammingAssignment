@@ -21,6 +21,8 @@ void changeColors(int colorToChange, int *colorValue, int resX, int resY);
 int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor);
 void drawPowerArrow(int mouseOldX, int mouseNewX, int mouseOldY, int mouseNewY, double power, float angle);
 void drawButton(MenuButton btn);
-
+void drawPowerBars(int power, int resY);
+void drawAngleArrow(int stickmanXPos, int resY, float angle);
+void showEndScreen(int resX, int resY, int score);
 
 #endif //__GOLFGAMEGRAPHICSFUNCS_H__

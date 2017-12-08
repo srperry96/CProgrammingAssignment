@@ -1,5 +1,4 @@
 #include <golfGameHighscoreFuncs.h>
-#include <golfGameGraphicsFuncs.h>
 
 //overwrite / create highscores file with default values
 void resetHighScores(void)
@@ -163,7 +162,10 @@ void checkAndSetNewHighScore(int score, int resX, int resY)
         update_display();
 
         printf("NEW HIGHSCORE!\nEnter your name: ");
-        scanf("%s", name);
+        scanf("%9s", name); // %9s limits the name length that can be entered to 9 characters (element 10 must hold '\0')
+        //clear the input buffer if the user entered too many characters
+        int tempChar;
+        do tempChar = getchar(); while(tempChar != '\n');
 
         //shift all scores lower than the new high score down one element in the array
         for(i = 9; i > listPosition; i--)

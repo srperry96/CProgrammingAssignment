@@ -101,7 +101,7 @@ void drawArmsAndClub(int startX, int resY, float angle, int fgColor)
     update_display();
 }
 
-void redrawEverything(int currentXPos, int resX, int resY, int fgColor) //redraw ground, target, stickman
+void redrawEverything(int currentXPos, int resX, int resY, int fgColor) //redraw ground, target, stickman, ball
 {
     cleardevice();
     drawStickman(currentXPos, resY, fgColor);
@@ -231,9 +231,8 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
     int posX = initialX;
     int posY = initialY;
     int prevX = initialX, prevY = initialY;
+    int maxHeight = 0, obstacleHit = 0, direction = 1;
     float gravity = 9.81, time = 0;
-    int maxHeight = 0;
-    int obstacleHit = 0, direction = 1;
 
     moveto(initialX, initialY);
 //=========================
@@ -248,7 +247,7 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
             time = (posX - initialX) / velX;
             posY = (int)(initialY - (velY * time) + (gravity * time * time) / 2);
 
-            //draw new ball white, draw over old ball in background color
+            //draw over old ball in background color
             switch(bgColor)
             {
                 case 0: filled_circle(prevX, prevY, 5, BLACK);
@@ -261,19 +260,21 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
                         break;
                 default: break;
             }
+            //draw new ball in white
             filled_circle(posX, posY, 4, WHITE);
-            //redraw ground and stickman in case black circle was drawn over it
+            //redraw ground and stickman in case black circle was drawn over them
             drawGround(resX, resY);
             drawTarget(resX, resY);
             drawStickman(stickmanXPos, resY, fgColor);
+            drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
 
             if(direction == 1) posX++;
             else posX--;
 
             pausefor(1); //wait 1ms
-            update_display();//having update display here makes arc look like something being thrown
+            update_display();//update display here makes ball look like its moving
 
-            if(posY < maxHeight) maxHeight = posY; //log max height (min y value) of current bounce
+            if(posY < maxHeight) maxHeight = posY; //track max height (min y value) of current bounce
 
             if(posX > resX - 20)
             {
@@ -281,7 +282,7 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
                 break;
             }
 
-        } while(posY <= resY - 54); //resY-51 not -50 so arc doesnt go through the ground
+        } while(posY <= resY - 54); //resY-54 not -50 so arc doesnt go through the ground
 
         //if bouncing off obstacle not ground
         if(obstacleHit == 1)
@@ -299,7 +300,7 @@ int drawArc(int stickmanXPos, int resX, int resY, float velX, float velY, int bg
             velY *= 0.6;
             initialX = posX;
         }
-        if(maxHeight > resY - 50 - 15) maxHeight = -1; //if max height reached by the ball is less than 10 pixels above the ground, count that as stopping
+        if(maxHeight > resY - 50 - 6) maxHeight = -1; //if max height reached by the ball is less than 10 pixels above the ground, count that as stopping
     }
 //===========================
     return posX;
@@ -338,5 +339,50 @@ void drawButton(MenuButton btn)
     lineto(btn.topLeftX + btn.width, btn.topLeftY + btn.height,1);
     lineto(btn.topLeftX, btn.topLeftY + btn.height,1);
     lineto(btn.topLeftX, btn.topLeftY,1);
-    outtextxy((btn.topLeftX + (btn.width / 5)), (btn.topLeftY + (btn.height / 3)), btn.buttonText);
+    outtextxy((btn.topLeftX + (btn.width / 4)), (btn.topLeftY + (btn.height / 3)), btn.buttonText);
+}
+
+void drawPowerBars(int power, int resY)
+{
+    int height = (resY - 150)/ 18;
+    int topY, bottomY, i;
+
+    for(i = 0; i < power; i++)
+    {
+        bottomY = resY - 140 - ((i-1) * height);
+        topY = resY - 140 - (i * height);
+        //power bar fill
+        filled_rectangle(120, topY, 170, bottomY, RED);
+        //power bar border
+        rectangle(120, topY, 170, bottomY, 2);
+    }
+}
+
+void drawAngleArrow(int stickmanXPos, int resY, float angle)
+{
+    int lineEndX, lineEndY;
+
+    //draw shaft of arrow
+    moveto(stickmanXPos + 5, resY - 50 - 5);
+    lineEndX = (stickmanXPos + 5) + (int)(40 * cos(angle));
+    lineEndY = (resY - 50 - 5) - (int)(40 * sin(angle));
+    lineto(lineEndX, lineEndY, 2);
+
+    //draw head of arrow
+    line(lineEndX, lineEndY, (lineEndX - (int)(10 * sin(angle + M_PI_4))), (lineEndY - (int)(10 * cos(angle + M_PI_4))), 2);
+    line(lineEndX, lineEndY, (lineEndX + (int)(10 * sin(angle - M_PI_4))), (lineEndY + (int)(10 * cos(angle - M_PI_4))), 2);
+}
+
+void showEndScreen(int resX, int resY, int score)
+{
+    char scoreString[5];
+
+    cleardevice();
+    sprintf(scoreString, "%d", score);
+    outtextxy(resX / 2 - 60, resY / 2 - 100,"GAME OVER");
+    outtextxy(resX / 2 - 80, resY / 2 - 60,"Score: ");
+    outtextxy(resX / 2, resY / 2 - 60, scoreString);
+    outtextxy(resX / 2 - 100, resY / 2 - 20, "Click to continue");
+    update_display();
+    waitForClick();
 }
