@@ -98,8 +98,6 @@ void drawArmsAndClub(int startX, int resY, float angle, int fgColor)
                 break;
         default: break;
     }
-
-//    update_display();
 }
 
 void redrawEverything(int currentXPos, int resX, int resY, int fgColor) //redraw ground, target, stickman, ball
@@ -109,7 +107,6 @@ void redrawEverything(int currentXPos, int resX, int resY, int fgColor) //redraw
     drawGround(resX, resY);
     drawTarget(resX, resY);
     drawBallAtFeet(currentXPos, resY);
-//    update_display();
 }
 
 void changeColors(int colorToChange, int *colorValue, int resX, int resY) //color to change 0 = foreground, 1 = background
@@ -269,6 +266,7 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
             drawStickman(stickmanXPos, resY, fgColor);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             drawObstacles(level, resX, resY, tree);
+            drawLevelLabel(level, resX);
 
             if(direction == 1) posX++;
             else posX--;
@@ -294,7 +292,7 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
             obstacleHit = 0;
             direction = abs(direction - 1); //change direction from 0 to 1 or vice versa
         }
-        //else if bouncing off obstacle horizontal
+        //else if bouncing off top of obstacle horizontal
         else if(obstacleHit == 2)
         {
             initialX = posX;
@@ -302,22 +300,31 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
             velY *= 0.6;
             obstacleHit = 0;
         }
-        //else if ball has landed in water
+        //else if bouncing off bottom of obstacle horizontal
         else if(obstacleHit == 3)
+        {
+            initialX = posX;
+            initialY = posY;
+            velY = -0.6 * velY;
+            obstacleHit = 0;
+        }
+        //else if ball has landed in water
+        else if(obstacleHit == 4)
         {
             //draw over old ball in background color, then play sinking animation
             switch(bgColor)
             {
-                case 0: filled_circle(prevX, prevY, 5, BLACK);
+                case 0: filled_rectangle((resX / 2 - 200), (resY - 50 - 20), (resX / 2 + 100), (resY - 50), BLACK);
                         break;
-                case 1: filled_circle(prevX, prevY, 5, BLUE);
+                case 1: filled_rectangle((resX / 2 - 200), (resY - 50 - 20), (resX / 2 + 100), (resY - 50), BLUE);
                         break;
-                case 2: filled_circle(prevX, prevY, 5, LIGHTGRAY);
+                case 2: filled_rectangle((resX / 2 - 200), (resY - 50 - 20), (resX / 2 + 100), (resY - 50), LIGHTGRAY);
                         break;
-                case 3: filled_circle(prevX, prevY, 5, BROWN);
+                case 3: filled_rectangle((resX / 2 - 200), (resY - 50 - 20), (resX / 2 + 100), (resY - 50), BROWN);
                         break;
                 default: break;
             }
+            update_display();
             ballSinkAnimation(posX, resX, resY);
             maxHeight = -1;
         }
@@ -333,32 +340,6 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
         if(maxHeight > resY - 50 - 6) maxHeight = -1;
     }
     return posX;
-}
-
-void drawPowerArrow(int mouseOldX, int mouseNewX, int mouseOldY, int mouseNewY, double power, float angle)
-{
-    char angleLabel[5];
-    char powerLabel[7];
-    float angleInDegs;
-
-    //labels for angle and power
-    angleInDegs = angle * (180/M_PI); //convert to degrees for output
-    printf("angle is %f\n", angleInDegs);
-    sprintf(angleLabel, "%0.0f", angleInDegs);
-    sprintf(powerLabel, "%0.0f", power);
-    outtextxy(mouseOldX+10, mouseOldY+20, powerLabel);
-    outtextxy(mouseOldX+10, mouseOldY-10, angleLabel);
-
-//    //drawing the arrow =================only works pointing up and right, between 0 and 90
-    float headAngle;
-
-    headAngle = angle + M_PI_4;
-    line(mouseOldX, mouseOldY, (mouseOldX - (power/5)*sin(headAngle)), (mouseOldY - (power/5)*cos(headAngle)), (power/20) );
-    headAngle = angle - M_PI_4;
-    line(mouseOldX, mouseOldY, (mouseOldX + (power/5)*sin(headAngle)), (mouseOldY + (power/5)*cos(headAngle)), (power/20) );
-
-    moveto(mouseOldX, mouseOldY);
-    lineto(mouseNewX, mouseNewY, (power/20) );
 }
 
 void drawButton(MenuButton btn)
@@ -439,4 +420,11 @@ void ballSinkAnimation(int posX, int resX, int resY)
         update_display();
         pausefor(20);
     }
+}
+
+void drawLevelLabel(int level, int resX)
+{
+    char levelLabelString[15];
+    sprintf(levelLabelString, "Level %d / 3", level);
+    outtextxy(resX - 150, 50, levelLabelString);
 }
