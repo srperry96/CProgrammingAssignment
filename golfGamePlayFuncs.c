@@ -4,6 +4,7 @@ void playGame(int resX, int resY, int bgColor, int fgColor)
 {
     int level = 1; //variable to indicate what level to load / what graphics to display
     int stickmanXPos = 70; //initial stickman position
+    int windSpeed = 0;
     float velX = 60, velY = 60; //launch velocity components default to 45 degree angle
     float launchAngle = 0.0;
 
@@ -18,28 +19,44 @@ void playGame(int resX, int resY, int bgColor, int fgColor)
     tree.leafHeight = 80;
     tree.totalHeight = 220;
 
-
     int i, landingPos, score = 0;
     char scoreString[50];
 
     for(i = 0; i < 9; i++)
     {
         //calculate level number - we play 3 balls per level, so i/3
-        level = 2;//(i / 3) + 1;
+        level = (i / 3) + 1;
+
+        //calculate random wind speed (between -5 and 5) for this turn
+        //positive windSpeed is left, negative right
+        windSpeed = 5 - (rand() % 10);
 
         //draw initial screen for this level
         redrawEverything(stickmanXPos, resX, resY, fgColor);
         drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
         drawObstacles(level, resX, resY, tree);
-        drawLevelLabel(level, resX);
+        drawLevelLabels(level, resX, windSpeed);
+
+        //draw instructions on first turn
+        if(i == 0)
+        {
+            outtextxy(resX/2 - 250, resY / 3, "Move the mouse and click to select shot angle and power");
+            outtextxy(resX/2 - 100, resY / 3 + 30, "Click to continue");
+            update_display();
+            waitForClick();
+        }
         update_display();
 
         //get launch angle and power for this turn
-        launchAngle = getLaunchAngle(resX, resY, stickmanXPos, fgColor, level, tree);
-        getPower(&velX, &velY, stickmanXPos, resX, resY, fgColor, launchAngle, level, tree);
+        launchAngle = getLaunchAngle(resX, resY, stickmanXPos, fgColor, level, tree, windSpeed);
+        getPower(&velX, &velY, stickmanXPos, resX, resY, fgColor, launchAngle, level, tree, windSpeed);
+
+        //incorporate wind in x velocity component (subtract as positive wind goes left, against positive velX)
+        //windSpeed is scaled so it actually affects the ball travel
+        velX -= (windSpeed * 3);
 
         //draw ball movement for this turn
-        landingPos = drawShot(stickmanXPos, resX, resY, velX, velY, bgColor, fgColor, level, tree);
+        landingPos = drawShot(stickmanXPos, resX, resY, velX, velY, bgColor, fgColor, level, tree, windSpeed);
 
         //flush event queue so the game waits for user input correctly
         while(check_if_event()) wait_for_event();
@@ -58,7 +75,7 @@ void playGame(int resX, int resY, int bgColor, int fgColor)
     showHighScores(resX, resY);
 }
 
-float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int level, ObstacleTree tree)
+float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int level, ObstacleTree tree, int windSpeed)
 {
     int mouseX, mouseY;
     int xVal, yVal;
@@ -81,14 +98,14 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int leve
 
             //limit angle between 5 and 85 degrees (anticlockwise from horizontal) so ball travels properly
             if(angle < M_PI_2 / 18) angle = M_PI_2 / 18;
-            else if(angle >= M_PI_2) angle = M_PI_2 - (M_PI_2 / 18);
+            else if(angle >= M_PI_2 - (2 * M_PI_2 / 18)) angle = M_PI_2 - (2 * M_PI_2 / 18);
 
             //redraw window with launch angle arrow
             redrawEverything(stickmanXPos, resX, resY, fgColor);
             drawAngleArrow(stickmanXPos, resY, angle);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             drawObstacles(level, resX, resY, tree);
-            drawLevelLabel(level, resX);
+            drawLevelLabels(level, resX, windSpeed);
             update_display();
         }
         else if(event_mouse_button_down()) //mouse button is clicked, so continue
@@ -97,7 +114,7 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int leve
             redrawEverything(stickmanXPos, resX, resY, fgColor);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             drawObstacles(level, resX, resY, tree);
-            drawLevelLabel(level, resX);
+            drawLevelLabels(level, resX, windSpeed);
             update_display();
             break;
         }
@@ -106,14 +123,30 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int leve
     return angle;
 }
 
-void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle, int level, ObstacleTree tree)
+void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle, int level, ObstacleTree tree, int windSpeed)
 {
     int mouseY, i, power = 0;
     float angle = M_PI_2;
 
-    //draw initial power bar - 10 chosen as that is near middle power
-    drawPowerBars(10, resY);
+    //draw initial power bar - this uses the same for loop as below
+    get_mouse_coordinates();
+    mouseY = YMOUSE;
+    for(i = 0; i < 18; i++)
+    {
+        if((mouseY >= (i * resY / 18)) && (mouseY < (i + 1)*(resY / 18)))
+        {
+            power = i+1;
+            break;
+        }
+    }
+    angle = ((M_PI_2 / 18) * (power));
+    redrawEverything(stickmanXPos, resX, resY, fgColor);
+    drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
+    drawPowerBars(19 - power, resY);
+    drawObstacles(level, resX, resY, tree);
+    drawLevelLabels(level, resX, windSpeed);
     update_display();
+
 
     while(1)
     {
@@ -135,7 +168,6 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
                 }
             }
 
-
             angle = ((M_PI_2 / 18) * (power));
 
             //redraw window with club in correct position
@@ -143,7 +175,7 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
             drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
             drawPowerBars(19 - power, resY);
             drawObstacles(level, resX, resY, tree);
-            drawLevelLabel(level, resX);
+            drawLevelLabels(level, resX, windSpeed);
             update_display();
         }
         else if(event_mouse_button_down()) //mouse button is clicked, so continue
@@ -156,7 +188,7 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
                 redrawEverything(stickmanXPos, resX, resY, fgColor);
                 drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
                 drawObstacles(level, resX, resY, tree);
-                drawLevelLabel(level, resX);
+                drawLevelLabels(level, resX, windSpeed);
                 update_display();
                 pausefor(5);
             }
@@ -180,18 +212,22 @@ int checkObstacleHit(int resX, int resY, int posX, int posY, int level, Obstacle
     else if(level == 2) // level 2 - tree
     {
         //hit trunk from left
-        if(((posX >= tree.trunkLeftX) && (posX < tree.trunkLeftX + 10) && (posY >= tree.leafBottomY) && (posY < resY - 50))
+        if(((posX >= tree.trunkLeftX - 10) && (posX < tree.trunkLeftX) && (posY >= tree.leafBottomY) && (posY < resY - 50))
         //hit trunk from right
-        || ((posX > tree.trunkLeftX + tree.trunkWidth - 10) && (posX <= tree.trunkLeftX + tree.trunkWidth) && (posY >= tree.leafBottomY) && (posY < resY - 50))
+        || ((posX > tree.trunkLeftX + tree.trunkWidth) && (posX <= tree.trunkLeftX + tree.trunkWidth + 10) && (posY >= tree.leafBottomY) && (posY < resY - 50))
         //hit leaf from left
-        || ((posX >= tree.leafLeftX) && (posX < tree.leafLeftX + 10) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY))
+        || ((posX >= tree.leafLeftX) && (posX < tree.leafLeftX + 10) && (posY > tree.leafBottomY - tree.leafHeight - 10) && (posY < tree.leafBottomY))
         //hit leaf from right
-        || ((posX > tree.leafLeftX + tree.leafWidth - 10) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY)))
-            return 1;
+        || ((posX > tree.leafLeftX + tree.leafWidth - 10) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY))
+        //hit middle leaf from left
+        || ((posX > tree.trunkLeftX - 20) && (posX < tree.trunkLeftX - 10) && (posY > resY - 50 - tree.totalHeight - 10) && (posY < tree.leafBottomY - tree.leafHeight - 15))
+        //hit middle leaf from right
+        || ((posX > tree.trunkLeftX + tree.trunkWidth + 5) && (posX < tree.trunkLeftX + tree.trunkWidth + 15) && (posY > resY - 50 - tree.totalHeight - 10) && (posY < tree.leafBottomY - tree.leafHeight - 15)))
+                return 1;
         //hit middle leaf from top
-        else if(((posX > tree.trunkLeftX - 15) && (posX < tree.trunkLeftX + tree.trunkWidth + 15) && (posY >= resY - 50 - tree.totalHeight) && (posY < resY - 50 - tree.totalHeight + 10))
+        else if(((posX > tree.trunkLeftX - 15) && (posX < tree.trunkLeftX + tree.trunkWidth + 15) && (posY >= resY - 50 - tree.totalHeight - 15) && (posY < resY - 50 - tree.totalHeight))
         //hit side leaves from top
-        || ((posX > tree.leafLeftX) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY - tree.leafHeight + 10)))
+        || ((posX > tree.leafLeftX) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight - 15) && (posY < tree.leafBottomY - tree.leafHeight)))
             return 2;
         //hit side leaves from bottom
         else if((posX > tree.leafLeftX) && (posX < tree.leafLeftX + 40) && (posY < tree.leafBottomY + 10) && (posY >= tree.leafBottomY))

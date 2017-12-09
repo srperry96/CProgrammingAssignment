@@ -187,5 +187,7 @@ void checkAndSetNewHighScore(int score, int resX, int resY)
             fprintf(highScoresFile, "\n");
         }
         fclose(highScoresFile);
+
+        printf("Highscore saved! Change to the graphics window to continue");
     }
 }

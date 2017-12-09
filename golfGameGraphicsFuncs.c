@@ -222,7 +222,7 @@ void changeColors(int colorToChange, int *colorValue, int resX, int resY) //colo
     }
 }
 
-int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor, int level, ObstacleTree tree)
+int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor, int level, ObstacleTree tree, int windSpeed)
 {
     int initialX = stickmanXPos + 5;//x pos of stickman + extra to put ball in front of stickman
     int initialY = resY - 50 - 5;//resY - 50 is ground level, - 10 so ball sits on top of ground
@@ -266,7 +266,7 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
             drawStickman(stickmanXPos, resY, fgColor);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             drawObstacles(level, resX, resY, tree);
-            drawLevelLabel(level, resX);
+            drawLevelLabels(level, resX, windSpeed);
 
             if(direction == 1) posX++;
             else posX--;
@@ -422,9 +422,21 @@ void ballSinkAnimation(int posX, int resX, int resY)
     }
 }
 
-void drawLevelLabel(int level, int resX)
+void drawLevelLabels(int level, int resX, int windSpeed)
 {
     char levelLabelString[15];
-    sprintf(levelLabelString, "Level %d / 3", level);
+
+    //write level number
+    sprintf(levelLabelString, "Level: %d / 3", level);
     outtextxy(resX - 150, 50, levelLabelString);
+
+    //write windspeed and direction
+    if(windSpeed > 0)
+        sprintf(levelLabelString, "Wind: %d  <-", windSpeed);
+    else if(windSpeed < 0)
+        sprintf(levelLabelString, "Wind: %d  ->", abs(windSpeed));
+    else
+        sprintf(levelLabelString, "No Wind");
+
+    outtextxy(resX - 150, 80, levelLabelString);
 }

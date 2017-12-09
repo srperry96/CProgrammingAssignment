@@ -6,8 +6,8 @@
 #include <golfGameHighscoreFuncs.h>
 
 void playGame(int resX, int resY, int bgColor, int fgColor);
-float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int level, ObstacleTree tree);
-void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle, int level, ObstacleTree tree);
+float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int level, ObstacleTree tree, int windSpeed);
+void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle, int level, ObstacleTree tree, int windSpeed);
 int checkObstacleHit(int resX, int resY, int posX, int posY, int level, ObstacleTree tree);
 int calculateScore(int landingPos, int resX);
 
