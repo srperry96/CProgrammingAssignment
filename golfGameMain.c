@@ -3,6 +3,9 @@
 #include <golfGameMenuFuncs.h>
 #include <golfGamePlayFuncs.h>
 
+/*Main function for the game. Displays the main menu and loops
+until exit is pressed. It calls the relevant function depending
+on the menu button pressed*/
 int main(void)
 {
     int resX = 800, resY = 600, exitFlag = 0; //Window resolution variables and flag for if exit has been clicked
@@ -11,10 +14,11 @@ int main(void)
 
     setup(resX, resY);
 
-    while(exitFlag == 0) //loop until exit game is pressed
+    //loop until exit game is pressed
+    while(exitFlag == 0)
     {
         cleardevice();
-        //get menu button selection (parameter 1 means main menu)
+        //get menu button selection (parameter 1 means show main menu)
         int menuSelection = getMenuSelection(resX, resY, 1);
 
         switch(menuSelection)

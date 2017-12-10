@@ -1,5 +1,7 @@
 #include <golfGameMenuFuncs.h>
 
+/*Initialise buttons for a specified menu screen, draw the menu
+and return the player selection when a button is clicked*/
 int getMenuSelection(int resX, int resY, int menuID)
 {
     int i, spaceBetweenButtons, numMenuItems, mouseXPos, mouseYPos;
@@ -97,6 +99,7 @@ int getMenuSelection(int resX, int resY, int menuID)
     }
 }
 
+/*Settings menu. Calls the corresponding function depending on the user selection*/
 void settingsMenu(int resX, int resY, int *bgColor, int *fgColor)
 {
     int menuSelection;
@@ -104,6 +107,7 @@ void settingsMenu(int resX, int resY, int *bgColor, int *fgColor)
 
     do
     {
+        //draw settings menu and wait for the user to choose an option
         menuSelection = getMenuSelection(resX, resY, 2);
         switch(menuSelection)
         {
@@ -121,5 +125,5 @@ void settingsMenu(int resX, int resY, int *bgColor, int *fgColor)
                      break;
             default: break;
         }
-    }while(backFlag != 1);
+    }while(backFlag != 1);//stay in the settings menu until the back button is pressed
 }
