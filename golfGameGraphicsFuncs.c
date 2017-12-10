@@ -264,7 +264,7 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
     int posX = initialX, posY = initialY, prevX = initialX, prevY = initialY;
 
     int maxHeight = 0, obstacleHit = 0, direction = 1;
-    float gravity = 9.81, time = 0;
+    float time = 0;
 
     //move to balls initial position
     moveto(initialX, initialY);
@@ -280,7 +280,7 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
 
             //calculate y position of ball based on time, acceleration, velocity
             time = (posX - initialX) / velX;
-            posY = (int)(initialY - (velY * time) + (gravity * time * time) / 2);
+            posY = (int)(initialY - (velY * time) + (GRAVITY * time * time) / 2);
 
             //draw over old ball in background color
             switch(bgColor)

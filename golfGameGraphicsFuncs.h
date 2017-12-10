@@ -4,6 +4,11 @@
 #include <graphics_lib.h>
 #include <math.h>
 
+#define GRAVITY 9.81
+
+/*Structure for menu button. Holds a top left coordinate and
+width and height so the button can be drawn, along with a
+string element for the button text*/
 typedef struct
 {
     int width, height;
@@ -11,6 +16,8 @@ typedef struct
     char buttonText[20];
 } MenuButton;
 
+/*Structure for tree obstacle object. Properties used for drawing
+the tree and in collision detection*/
 typedef struct
 {
     int trunkLeftX, trunkWidth, trunkHeight;
