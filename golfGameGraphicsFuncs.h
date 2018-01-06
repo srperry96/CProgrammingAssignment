@@ -36,13 +36,13 @@ void drawBallAtFeet(int stickmanXPos, int resY);
 
 /*Draw the target on the right of the screen. This consists
 of lines and numbers to label the scores for each zone*/
-void drawTarget(int resX, int resY);
+void drawTarget(int resX, int resY, int difficulty);
 
 /*Draw the arms of the stickman and the golfclub at a specified angle*/
 void drawArmsAndClub(int startX, int resY, float angle, int fgColor);
 
 /*Clear the device and redraw the ground, stickman, target and ball at the stickmans feet*/
-void redrawEverything(int currentXPos, int resX, int resY, int fgColor);
+void redrawEverything(int currentXPos, int resX, int resY, int fgColor, int difficulty);
 
 /*Draw four squares of different colours on screen, and change the background
 or foreground colour based on the user selection of one of these squares.
@@ -52,7 +52,7 @@ void changeColors(int colorToChange, int *colorValue, int resX, int resY);
 /*Calculate the path of the golf ball and animate its motion.
 Collisions are checked and a final position is returned when
 the ball stops moving or is lost*/
-int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor, int level, ObstacleTree tree, int windSpeed);
+int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor, int level, ObstacleTree tree, int windSpeed, int difficulty);
 
 /*Draw a button on screen in a position specified by the buttons properties*/
 void drawButton(MenuButton btn);

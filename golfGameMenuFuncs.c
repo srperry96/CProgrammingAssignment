@@ -28,8 +28,16 @@ int getMenuSelection(int resX, int resY, int menuID)
         strcpy(buttonsArray[1].buttonText, "Colour 2");
         strcpy(buttonsArray[2].buttonText, "Reset Scores");
     }
+    else if(menuID == 3)//menuID 3 is difficulty menu
+    {
+        numMenuItems = 3;
+        outtextxy(((resX / 2) - 40), 50, "Difficulty");
+        strcpy(buttonsArray[0].buttonText, "  Easy");
+        strcpy(buttonsArray[1].buttonText, "  Medium");
+        strcpy(buttonsArray[2].buttonText, "   Hard");
+    }
 
-    //(resY - 2 * buttonHeight) gives space for all buttons. Divide by num of buttons to get space on screen
+    //(resY - 2 * buttonHeight) gives space for all buttons. Divide by number of buttons to get space on screen
     //for each button and the space following it. subtract button height to get space between buttons
     spaceBetweenButtons = ((resY - (2 * buttonHeight)) / numMenuItems) - buttonHeight;
 
@@ -51,7 +59,6 @@ int getMenuSelection(int resX, int resY, int menuID)
     if(menuID == 2)
     {
         //draw back button
-
         backButton.width = resX / 12;
         backButton.height = resY / 12;
         backButton.topLeftX = 20;
@@ -84,7 +91,14 @@ int getMenuSelection(int resX, int resY, int menuID)
                 {
                     if((mouseYPos >= buttonsArray[i].topLeftY) && (mouseYPos <= buttonsArray[i].topLeftY + buttonHeight))
                     {
-                        return i;
+                        //this loop waits for the mouse button to be released before continuing
+                        //this means that the mouse being released doesnt instantly trigger a selection in the next menu
+                        while(1)
+                        {
+                            wait_for_event();
+                            if(event_mouse_left_button_down())
+                                return i;
+                        }
                     }
                 }
             }
@@ -93,7 +107,7 @@ int getMenuSelection(int resX, int resY, int menuID)
                 //if mouse is over back button, return -1 so we return to main menu
                 if((mouseXPos >= backButton.topLeftX) && (mouseXPos <= (backButton.topLeftX + backButton.width))
                     && (mouseYPos >= backButton.topLeftY) && (mouseYPos <= backButton.topLeftY + backButton.height))
-                    return -1;
+                        return -1;
             }
         }
     }

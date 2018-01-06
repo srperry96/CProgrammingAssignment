@@ -42,28 +42,40 @@ void drawBallAtFeet(int stickmanXPos, int resY)
 
 /*Draw the target on the right of the screen. This consists
 of lines and numbers to label the scores for each zone*/
-void drawTarget(int resX, int resY)
+void drawTarget(int resX, int resY, int difficulty)
 {
-    //initialise scoring zones array
-    int scores[5] = {10, 20, 30, 20, 10};
-    char strScores[3];
-    int i, pos;
-
-    //draw lines and labels for the target. each zone is 30 pixels wide
-    for(i = 0; i < 5; i++)
+    if(difficulty != 2) //draw hole for Easy and Medium difficulties
     {
-        //resX - 200 is leftmost point of target. draw line every 30 pixels right from there
-        pos = (i * 30) + (resX - 200);
+        //draw hole - black rectangle
+        filled_rectangle(resX - 140, resY - 50, resX - 110, resY - 30, BLACK);
+        //draw flag - white rectangle for pole, red and black triangles for flag and its outline
+        filled_rectangle(resX - 127, resY - 150, resX - 123, resY - 30, WHITE);
+        filled_triangle(resX - 122, resY - 151, resX - 122, resY - 119, resX - 98, resY - 135, BLACK);
+        filled_triangle(resX - 123, resY - 150, resX - 123, resY - 120, resX - 100, resY - 135, RED);
+    }
+    else //draw target for Hard difficulty
+    {
+        //initialise scoring zones array
+        int scores[5] = {10, 20, 30, 20, 10};
+        char strScores[3];
+        int i, pos;
+
+        //draw lines and labels for the target. each zone is 30 pixels wide
+        for(i = 0; i < 5; i++)
+        {
+            //resX - 200 is leftmost point of target. draw line every 30 pixels right from there
+            pos = (i * 30) + (resX - 200);
+            moveto(pos, resY - 50);
+            lineto(pos, resY - 40, 1);
+            sprintf(strScores, "%d", scores[i]);
+            outtextxy(pos + 6, resY - 45, strScores);
+        }
+
+        //draw last line of target (right most line)
+        pos = (5 * 30) + (resX - 200);
         moveto(pos, resY - 50);
         lineto(pos, resY - 40, 1);
-        sprintf(strScores, "%d", scores[i]);
-        outtextxy(pos + 6, resY - 45, strScores);
     }
-
-    //draw last line of target (right most line)
-    pos = (5 * 30) + (resX - 200);
-    moveto(pos, resY - 50);
-    lineto(pos, resY - 40, 1);
 }
 
 /*Draw the arms of the stickman and the golfclub at a specified angle*/
@@ -120,12 +132,12 @@ void drawArmsAndClub(int startX, int resY, float angle, int fgColor)
 }
 
 /*Clear the device and redraw the ground, stickman, target and ball at the stickmans feet*/
-void redrawEverything(int currentXPos, int resX, int resY, int fgColor)
+void redrawEverything(int currentXPos, int resX, int resY, int fgColor, int difficulty)
 {
     cleardevice();
     drawStickman(currentXPos, resY, fgColor);
     drawGround(resX, resY);
-    drawTarget(resX, resY);
+    drawTarget(resX, resY, difficulty);
     drawBallAtFeet(currentXPos, resY);
 }
 
@@ -256,7 +268,7 @@ void changeColors(int colorToChange, int *colorValue, int resX, int resY) //colo
 /*Calculate the path of the golf ball and animate its motion.
 Collisions are checked and a final position is returned when
 the ball stops moving or is lost*/
-int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor, int level, ObstacleTree tree, int windSpeed)
+int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int bgColor, int fgColor, int level, ObstacleTree tree, int windSpeed, int difficulty)
 {
     //setup variables for use in movement calculation
     int initialX = stickmanXPos + 5;//x pos of stickman +5 to put ball in front of stickman
@@ -301,7 +313,7 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
 
             //redraw ground and stickman in case black circle was drawn over them
             drawGround(resX, resY);
-            drawTarget(resX, resY);
+            drawTarget(resX, resY, difficulty);
             drawStickman(stickmanXPos, resY, fgColor);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             drawObstacles(level, resX, resY, tree);
@@ -319,7 +331,7 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
             if(posY < maxHeight) maxHeight = posY;
 
             //check if an obstacle has been hit. if yes, break out of loop
-            obstacleHit = checkObstacleHit(resX, resY, posX, posY, level, tree);
+            obstacleHit = checkObstacleHit(resX, resY, posX, posY, level, tree, difficulty);
             if(obstacleHit != 0) break;
 
         } while(posY <= resY - 54); //resY - 54 (not -50) so ball (radius 4) doesnt go through the ground
@@ -329,20 +341,21 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
         {
             initialX = posX;
             initialY = posY;
-            velX = -0.6 * velX;
+            velX = -0.4 * velX;
             velY = 0.6 * velY;
             obstacleHit = 0;
             direction = abs(direction - 1); //change direction from 0 to 1 or vice versa
         }
-        //else if bouncing off top of obstacle horizontal - bounce up with smaller velocity
+        //else if bouncing off top of horizontal obstacle - bounce up with lower velocity
         else if(obstacleHit == 2)
         {
             initialX = posX;
             initialY = posY;
             velY *= 0.6;
+            velX *= 0.8;
             obstacleHit = 0;
         }
-        //else if bouncing off bottom of obstacle horizontal bounce down with smaller velocity
+        //else if bouncing off bottom of horizontal obstacle, bounce down with lowerer velocity
         else if(obstacleHit == 3)
         {
             initialX = posX;
@@ -370,12 +383,39 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
             ballSinkAnimation(posX, resX, resY);
             maxHeight = -1;
         }
+        //if ball has fallen in the hole (easy and medium difficulties only)
+        else if(obstacleHit == 5)
+        {
+            //draw over previous ball in background colour
+            switch(bgColor)
+            {
+                case 0: filled_circle(prevX, prevY, 7, BLACK);
+                        break;
+                case 1: filled_circle(prevX, prevY, 7, BLUE);
+                        break;
+                case 2: filled_circle(prevX, prevY, 7, LIGHTGRAY);
+                        break;
+                case 3: filled_circle(prevX, prevY, 7, BROWN);
+                        break;
+                default: break;
+            }
+            //redraw target hole and flag in case it was drawn over
+            drawTarget(resX, resY, difficulty);
+            //draw ball in bottom of hole
+            filled_circle(posX, resY - 35, 4, WHITE);
+            update_display();
+            pausefor(200);
+
+            //returning -1 indicates that the ball is in the hole, rather than at a point on the target used in Hard difficulty
+            return -1;
+        }
         //else ball bounces off ground - start new arc calculation from bounce point, with lower y velocity
         else
         {
             initialX = posX;
             initialY = resY - 55;
             velY *= 0.6;
+            velX *= 0.8;
             obstacleHit = 0;
         }
         //if max height reached by the ball is less than 6 pixels above the ground, count that as stopping

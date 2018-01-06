@@ -3,7 +3,7 @@
 /*Run through 9 turns of gameplay, with 3 turns on each level.
 This is the main game function which sets up the game and calls
 the relevant functions to play a round of golf*/
-void playGame(int resX, int resY, int bgColor, int fgColor)
+void playGame(int resX, int resY, int bgColor, int fgColor, int difficulty)
 {
     int level = 1; //variable to indicate what level to load / what graphics to display
     int stickmanXPos = 70; //initial stickman position - allows space for full swing back of golf club
@@ -32,10 +32,10 @@ void playGame(int resX, int resY, int bgColor, int fgColor)
 
         //calculate random wind speed (between -5 and 5) for the turn
         //positive windSpeed is left, negative is right
-        windSpeed = 5 - (rand() % 10);
+        if(difficulty != 0) windSpeed = 5 - (rand() % 10);
 
         //draw initial screen for this level
-        redrawEverything(stickmanXPos, resX, resY, fgColor);
+        redrawEverything(stickmanXPos, resX, resY, fgColor, difficulty);
         drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
         drawObstacles(level, resX, resY, tree);
         drawLevelLabels(level, resX, windSpeed);
@@ -46,7 +46,7 @@ void playGame(int resX, int resY, int bgColor, int fgColor)
         if(i == 0)
         {
             outtextxy(resX/2 - 250, resY / 3 - 30, "Move the mouse and click to select shot angle and power.");
-            outtextxy(resX/2 - 250, resY / 3, "Be careful, wind speed will have an effect on your shot.");
+            if(difficulty != 0) outtextxy(resX/2 - 250, resY / 3, "Be careful, wind speed will have an effect on your shot.");
             outtextxy(resX/2 - 100, resY / 3 + 30, "Click to continue...");
             update_display();
             waitForClick();
@@ -70,22 +70,26 @@ void playGame(int resX, int resY, int bgColor, int fgColor)
         update_display();
 
         //get launch angle and power for this turn
-        launchAngle = getLaunchAngle(resX, resY, stickmanXPos, fgColor, level, tree, windSpeed);
-        getPower(&velX, &velY, stickmanXPos, resX, resY, fgColor, launchAngle, level, tree, windSpeed);
+        launchAngle = getLaunchAngle(resX, resY, stickmanXPos, fgColor, level, tree, windSpeed, difficulty);
+        getPower(&velX, &velY, stickmanXPos, resX, resY, fgColor, launchAngle, level, tree, windSpeed, difficulty);
 
         //incorporate wind in x velocity component (subtract as positive wind goes left, against the positive velX)
         //windSpeed is scaled so it actually affects the ball travel
         velX -= (windSpeed * 3);
 
         //draw ball movement for this turn and determine its landing position
-        landingPos = drawShot(stickmanXPos, resX, resY, velX, velY, bgColor, fgColor, level, tree, windSpeed);
+        landingPos = drawShot(stickmanXPos, resX, resY, velX, velY, bgColor, fgColor, level, tree, windSpeed, difficulty);
 
         //flush the event queue so the game waits for user input correctly
         //if this is not done and the player clicks during animation, the game will skip forward too fast
         while(check_if_event()) wait_for_event();
 
         //calculate score, display it, and wait for a click to continue
-        score += calculateScore(landingPos, resX);
+        //in Easy and Medium, a hole counts as 25 points. In Hard, each target zone has a different score
+        if(landingPos == -1)
+            score += 25;
+        else if(difficulty == 2)
+            score += calculateScore(landingPos, resX);
         sprintf(scoreString, "Current Score: %d. Click to continue", score);
         outtextxy(resX / 2 - 150, resY/3, scoreString);
         update_display();
@@ -102,7 +106,7 @@ void playGame(int resX, int resY, int bgColor, int fgColor)
 /*Get the launch angle for the current turn. Selection is done
 using the mouse position. An arrow is drawn on the screen to show
 the current angle. The angle is selected by clicking.*/
-float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int level, ObstacleTree tree, int windSpeed)
+float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int level, ObstacleTree tree, int windSpeed, int difficulty)
 {
     int mouseX, mouseY;
     int xVal, yVal;
@@ -130,7 +134,7 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int leve
             else if(angle >= M_PI_2 - (2 * M_PI_2 / 18)) angle = M_PI_2 - (2 * M_PI_2 / 18);
 
             //redraw window with the angle selection arrow at the correct position
-            redrawEverything(stickmanXPos, resX, resY, fgColor);
+            redrawEverything(stickmanXPos, resX, resY, fgColor, difficulty);
             drawAngleArrow(stickmanXPos, resY, angle);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             drawObstacles(level, resX, resY, tree);
@@ -142,7 +146,7 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int leve
         {
             //redraw everything and break out of the loop to continue
             cleardevice();
-            redrawEverything(stickmanXPos, resX, resY, fgColor);
+            redrawEverything(stickmanXPos, resX, resY, fgColor, difficulty);
             drawArmsAndClub(stickmanXPos, resY, M_PI_2, fgColor);
             drawObstacles(level, resX, resY, tree);
             drawLevelLabels(level, resX, windSpeed);
@@ -156,7 +160,7 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int leve
 
 /*Get the power to be used in velocity calculations for the current turn.
 Power selection is done using the mouse and a graphical power bar on screen*/
-void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle, int level, ObstacleTree tree, int windSpeed)
+void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, int fgColor, float launchAngle, int level, ObstacleTree tree, int windSpeed, int difficulty)
 {
     int mouseY, i, power = 0;
     float angle = M_PI_2;
@@ -174,7 +178,7 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
         }
     }
     angle = ((M_PI_2 / 18) * (power));
-    redrawEverything(stickmanXPos, resX, resY, fgColor);
+    redrawEverything(stickmanXPos, resX, resY, fgColor, difficulty);
     drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
     drawPowerBars(19 - power, resY);
     drawObstacles(level, resX, resY, tree);
@@ -207,7 +211,7 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
             angle = ((M_PI_2 / 18) * (power));
 
             //redraw window with club in correct position
-            redrawEverything(stickmanXPos, resX, resY, fgColor);
+            redrawEverything(stickmanXPos, resX, resY, fgColor, difficulty);
             drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
             drawPowerBars(19 - power, resY);
             drawObstacles(level, resX, resY, tree);
@@ -222,7 +226,7 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
             {
                 angle = ((M_PI_2 / 18) * i);
                 cleardevice();
-                redrawEverything(stickmanXPos, resX, resY, fgColor);
+                redrawEverything(stickmanXPos, resX, resY, fgColor, difficulty);
                 drawArmsAndClub(stickmanXPos, resY, angle, fgColor);
                 drawObstacles(level, resX, resY, tree);
                 drawLevelLabels(level, resX, windSpeed);
@@ -249,8 +253,16 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
 and return the type of collision that has been detected. Three types of collision are used:
 1 - hitting a vertical obstacle, 2 - hitting a horizontal obstacle from above,
 3 - hitting a horizontal obstacle from below, 4 - landing in water*/
-int checkObstacleHit(int resX, int resY, int posX, int posY, int level, ObstacleTree tree)
+int checkObstacleHit(int resX, int resY, int posX, int posY, int level, ObstacleTree tree, int difficulty)
 {
+    //if we are on a difficulty with a hole, rather than a target, check if it has fallen in
+    if(difficulty != 2)
+    {
+        //check if ball is within region where it should fall into the hole
+        if((posY >= resY - 55) && (posX >= resX - 140 + 5) && (posX < resX - 110 - 5))
+            return 5;
+    }
+
      //if the ball hits the right side of the screen, it bounces back
     if(posX > resX - 4)
         return 1;
@@ -258,10 +270,12 @@ int checkObstacleHit(int resX, int resY, int posX, int posY, int level, Obstacle
     else if(level == 2)
     {
         //this series of conditions tests various possible collisions with each element of the tree
+        //TRUNK
         //hitting the trunk from the left
         if(((posX >= tree.trunkLeftX - 10) && (posX < tree.trunkLeftX) && (posY >= tree.leafBottomY) && (posY < resY - 50))
         //hitting the trunk from the right
         || ((posX > tree.trunkLeftX + tree.trunkWidth) && (posX <= tree.trunkLeftX + tree.trunkWidth + 10) && (posY >= tree.leafBottomY) && (posY < resY - 50))
+        //LEAVES
         //hitting the leaves from the left
         || ((posX >= tree.leafLeftX) && (posX < tree.leafLeftX + 10) && (posY > tree.leafBottomY - tree.leafHeight - 10) && (posY < tree.leafBottomY))
         //hitting the leaves from the right
