@@ -105,7 +105,7 @@ void drawArmsAndClub(int startX, int resY, float angle, int fgColor)
     lineto(startX - lengthX + lengthY, startY + lengthY + lengthX, 2);
 
     //calculate the x and y components for the golf club drawing.
-    //angle subtraction from start of function is undone
+    //the angle subtraction from the start of this function is undone
     //as the club is at 45 degrees to the arms
     angle += M_PI_4;
     int clubHandleX = startX + lengthY - lengthX;
@@ -116,6 +116,7 @@ void drawArmsAndClub(int startX, int resY, float angle, int fgColor)
     moveto(clubHandleX, clubHandleY);
     lineto(clubHandleX - (int)(27 * cos(angle)), clubHandleY + (int)(27 * sin(angle)), 2);
     filled_circle(clubHandleX - (int)(27 * cos(angle)), clubHandleY + (int)(27 * sin(angle)), 5, DARKGRAY);
+
     //set pen color back to what it was
     switch(fgColor)
     {
