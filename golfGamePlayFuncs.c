@@ -323,8 +323,8 @@ int calculateScore(int landingPos, int resX)
         case 1:
         case 5: return 10;
         case 2:
-        case 4: return 20;
-        case 3: return 30;
+        case 4: return 25;
+        case 3: return 50;
         default: return 0;
     }
 }

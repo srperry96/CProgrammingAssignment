@@ -56,7 +56,7 @@ void drawTarget(int resX, int resY, int difficulty)
     else //draw target for Hard difficulty
     {
         //initialise scoring zones array
-        int scores[5] = {10, 20, 30, 20, 10};
+        int scores[5] = {10, 25, 50, 25, 10};
         char strScores[3];
         int i, pos;
 
