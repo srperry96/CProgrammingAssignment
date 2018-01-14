@@ -27,7 +27,7 @@ void playGame(int resX, int resY, int bgColor, int fgColor, int difficulty)
     for(i = 0; i < 9; i++)
     {
         //calculate level number - we play 3 balls per level, so i/3 + 1 gives level number 1, 2 or 3
-        level =2; //(i / 3) + 1;
+        level = (i / 3) + 1;
 
         //calculate random wind speed (between -5 and 5) for the turn
         //positive windSpeed is left, negative is right
