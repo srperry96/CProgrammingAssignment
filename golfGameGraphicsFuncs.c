@@ -275,6 +275,7 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
     int initialX = stickmanXPos + 5;//x pos of stickman +5 to put ball in front of stickman
     int initialY = resY - 50 - 5;//resY - 50 is ground level, -5 so ball sits on top of ground
     int posX = initialX, posY = initialY, prevX = initialX, prevY = initialY;
+    int falling = 0;//variable to track if the ball is falling or rising - used in collision detection
 
     int maxHeight = 0, obstacleHit = 0, direction = 1;
     float time = 0;
@@ -331,8 +332,12 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
             //track max height (min y value) of current bounce
             if(posY < maxHeight) maxHeight = posY;
 
+            //track vertical direction of the ball
+            if(posY <= prevY) falling = 0;
+            else falling = 1;
+
             //check if an obstacle has been hit. if yes, break out of loop
-            obstacleHit = checkObstacleHit(resX, resY, posX, posY, level, tree, difficulty);
+            obstacleHit = checkObstacleHit(resX, resY, posX, posY, level, tree, difficulty, direction, falling);
             if(obstacleHit != 0) break;
 
         } while(posY <= resY - 54); //resY - 54 (not -50) so ball (radius 4) doesnt go through the ground
@@ -353,7 +358,6 @@ int drawShot(int stickmanXPos, int resX, int resY, float velX, float velY, int b
             initialX = posX;
             initialY = posY;
             velY *= 0.6;
-            velX *= 0.8;
             obstacleHit = 0;
         }
         //else if bouncing off bottom of horizontal obstacle, bounce down with lowerer velocity

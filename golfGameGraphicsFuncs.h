@@ -22,7 +22,6 @@ typedef struct
 {
     int trunkLeftX, trunkWidth, trunkHeight;
     int leafLeftX, leafBottomY, leafWidth, leafHeight;
-    int totalHeight; //variables for ball bounce off calculation
 } ObstacleTree;
 
 /*Draw the stickman*/

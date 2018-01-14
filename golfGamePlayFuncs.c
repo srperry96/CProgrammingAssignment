@@ -21,14 +21,13 @@ void playGame(int resX, int resY, int bgColor, int fgColor, int difficulty)
     tree.leafBottomY = resY - 50 - 110;
     tree.leafLeftX = tree.trunkLeftX - 45;
     tree.leafWidth = 140;
-    tree.leafHeight = 80;
-    tree.totalHeight = 220;
+    tree.leafHeight = 110;
 
     //loop for 9 turns, 3 on each level
     for(i = 0; i < 9; i++)
     {
         //calculate level number - we play 3 balls per level, so i/3 + 1 gives level number 1, 2 or 3
-        level = (i / 3) + 1;
+        level =2; //(i / 3) + 1;
 
         //calculate random wind speed (between -5 and 5) for the turn
         //positive windSpeed is left, negative is right
@@ -253,7 +252,7 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
 and return the type of collision that has been detected. Three types of collision are used:
 1 - hitting a vertical obstacle, 2 - hitting a horizontal obstacle from above,
 3 - hitting a horizontal obstacle from below, 4 - landing in water*/
-int checkObstacleHit(int resX, int resY, int posX, int posY, int level, ObstacleTree tree, int difficulty)
+int checkObstacleHit(int resX, int resY, int posX, int posY, int level, ObstacleTree tree, int difficulty, int direction, int falling)
 {
     //if we are on a difficulty with a hole, rather than a target, check if it has fallen in
     if(difficulty != 2)
@@ -270,28 +269,23 @@ int checkObstacleHit(int resX, int resY, int posX, int posY, int level, Obstacle
     else if(level == 2)
     {
         //this series of conditions tests various possible collisions with each element of the tree
+        //return 1 for bounce off vertical, return 2 for bounce on top of something, return 3 for bounce off bottom of something
         //TRUNK
         //hitting the trunk from the left
-        if(((posX >= tree.trunkLeftX - 10) && (posX < tree.trunkLeftX) && (posY >= tree.leafBottomY) && (posY < resY - 50))
+        if(((posX >= tree.trunkLeftX - 10) && (posX < tree.trunkLeftX) && (posY >= resY - 50 - tree.trunkHeight) && (posY < resY - 50) && (direction == 1))
         //hitting the trunk from the right
-        || ((posX > tree.trunkLeftX + tree.trunkWidth) && (posX <= tree.trunkLeftX + tree.trunkWidth + 10) && (posY >= tree.leafBottomY) && (posY < resY - 50))
+        || ((posX > tree.trunkLeftX + tree.trunkWidth) && (posX <= tree.trunkLeftX + tree.trunkWidth + 10) && (posY >= resY - 50 - tree.trunkHeight) && (posY < resY - 50) && (direction == 0))
         //LEAVES
         //hitting the leaves from the left
-        || ((posX >= tree.leafLeftX) && (posX < tree.leafLeftX + 10) && (posY > tree.leafBottomY - tree.leafHeight - 10) && (posY < tree.leafBottomY))
+        || ((posX >= tree.leafLeftX) && (posX < tree.leafLeftX + 10) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY) && (direction == 1))
         //hitting the leaves from the right
-        || ((posX > tree.leafLeftX + tree.leafWidth - 10) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY))
-        //hitting the top (central) leaves from the left
-        || ((posX > tree.trunkLeftX - 20) && (posX < tree.trunkLeftX - 10) && (posY > resY - 50 - tree.totalHeight - 10) && (posY < tree.leafBottomY - tree.leafHeight - 15))
-        //hitting the top (central) leaves from the right
-        || ((posX > tree.trunkLeftX + tree.trunkWidth + 5) && (posX < tree.trunkLeftX + tree.trunkWidth + 15) && (posY > resY - 50 - tree.totalHeight - 10) && (posY < tree.leafBottomY - tree.leafHeight - 15)))
-                return 1;
-        //hitting the top (central) leaves from the top
-        else if(((posX > tree.trunkLeftX - 15) && (posX < tree.trunkLeftX + tree.trunkWidth + 15) && (posY >= resY - 50 - tree.totalHeight - 15) && (posY < resY - 50 - tree.totalHeight))
-        //hitting the side leaves from the top
-        || ((posX > tree.leafLeftX) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight - 15) && (posY < tree.leafBottomY - tree.leafHeight)))
+        || ((posX > tree.leafLeftX + tree.leafWidth - 10) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY) && (direction == 0)))
+            return 1;
+        //hitting the leaves from the top
+        else if((posX > tree.leafLeftX) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - tree.leafHeight) && (posY < tree.leafBottomY - tree.leafHeight + 5) && (falling == 1))
             return 2;
-        //hitting the side leaves from the bottom
-        else if((posX > tree.leafLeftX) && (posX < tree.leafLeftX + 40) && (posY < tree.leafBottomY + 10) && (posY >= tree.leafBottomY))
+        //hitting the leaves from the bottom
+        else if((posX > tree.leafLeftX) && (posX < tree.leafLeftX + tree.leafWidth) && (posY > tree.leafBottomY - 5) && (posY < tree.leafBottomY + 5) && (falling == 0))
             return 3;
     }
     //if we are on level 3 there is water, so test if we have landed in it
