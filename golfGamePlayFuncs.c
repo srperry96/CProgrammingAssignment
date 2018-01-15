@@ -123,7 +123,7 @@ float getLaunchAngle(int resX, int resY, int stickmanXPos, int fgColor, int leve
 
             //calculate the differences between the centre of the golf ball and the mouse position
             xVal = mouseX - (stickmanXPos + 5); //stickmanXPos + 5 is centre of golf ball
-            yVal = (resY - 50 - 5) - mouseY;    //resY-50-5 is centre of golf ball
+            yVal = (resY - 50 - 5) - mouseY;    //resY - 50 - 5 is centre of golf ball (50 for ground height, 5 to get to ball centre)
 
             //calculate an angle between the golf ball and the mouse position
             angle = atan2(yVal, xVal);
@@ -236,7 +236,7 @@ void getPower(float *velX, float *velY, int stickmanXPos, int resX, int resY, in
             break;
         }
     }
-    //power regions are calculated in the wrong order as y coordinate increase as you move down
+    //power regions are calculated in the wrong order as y coordinates increase as you move down
     //so we have power zone 1 at the top, and 18 at the bottom. 19 - power gives the correct power value
     power = 19 - power;
 
@@ -258,6 +258,9 @@ int checkObstacleHit(int resX, int resY, int posX, int posY, int level, Obstacle
     if(difficulty != 2)
     {
         //check if ball is within region where it should fall into the hole
+        //resY - 55 is just above the hole
+        //resX - 140 is left side of hole, resX - 110 is right side of hole, +-5 make sure ball is inside the hole
+        //so it doesnt fall through the ground
         if((posY >= resY - 55) && (posX >= resX - 140 + 5) && (posX < resX - 110 - 5))
             return 5;
     }
@@ -270,6 +273,8 @@ int checkObstacleHit(int resX, int resY, int posX, int posY, int level, Obstacle
     {
         //this series of conditions tests various possible collisions with each element of the tree
         //return 1 for bounce off vertical, return 2 for bounce on top of something, return 3 for bounce off bottom of something
+        //+-10 and +-5 used in conditions give a threshold range for testing, rather than just using a single value
+        //-50 in conditions is the ground height
         //TRUNK
         //hitting the trunk from the left
         if(((posX >= tree.trunkLeftX - 10) && (posX < tree.trunkLeftX) && (posY >= resY - 50 - tree.trunkHeight) && (posY < resY - 50) && (direction == 1))
@@ -301,11 +306,12 @@ int checkObstacleHit(int resX, int resY, int posX, int posY, int level, Obstacle
 /*Calculate the score for the current turn based on the final position of the ball*/
 int calculateScore(int landingPos, int resX)
 {
-    //resX - 200 is the left most point of the target. target zones are 30px wide. score zones: 10 20 30 20 10
+
     int targetZoneBands[6];
     int i, scoreZone = 0;
 
     //calculate bands for scoring zones
+    //resX - 200 is the left most point of the target. target zones are 30px wide. score zones: 10 25 50 25 10
     for(i = 0; i < 6; i++)
         targetZoneBands[i] = (i*30) + resX - 200;
 
